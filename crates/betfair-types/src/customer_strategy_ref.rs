@@ -1,4 +1,4 @@
-use std::fmt;
+use std::fmt::{self, Display};
 
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -14,6 +14,14 @@ impl CustomerStrategyRef {
     #[must_use]
     pub const fn new(customer_strategy_ref: [char; 15]) -> Self {
         Self(customer_strategy_ref)
+    }
+}
+
+impl Display for CustomerStrategyRef {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s: String = self.0.iter().collect();
+        let s_trimmed = s.trim_end_matches('\0');
+        write!(f, "{}", s_trimmed)
     }
 }
 
