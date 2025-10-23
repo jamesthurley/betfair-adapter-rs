@@ -11,9 +11,17 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 pub struct CustomerStrategyRef([char; 15]);
 
 impl CustomerStrategyRef {
+    pub const EMPTY: CustomerStrategyRef = CustomerStrategyRef::new(['\0'; 15]);
+
     #[must_use]
     pub const fn new(customer_strategy_ref: [char; 15]) -> Self {
         Self(customer_strategy_ref)
+    }
+}
+
+impl Default for CustomerStrategyRef {
+    fn default() -> Self {
+        Self::EMPTY
     }
 }
 
