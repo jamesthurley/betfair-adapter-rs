@@ -33,15 +33,13 @@ impl BetfairRpcClient<Authenticated> {
 
         if full.status().is_success() {
             let text = full.text().await?;
-            if text.trim().is_empty() {
-                tracing::warn!("Received empty response body");
-                return Err(ApiError::EmptyResponse);
-            }
-            let res = serde_json::from_str::<T::Res>(&text)?;
+            let context = format!("send_request success (method: {})", T::method());
+            let res = deserialize_json_str::<T::Res>(&text, &context)?;
             Ok(res)
         } else {
             let text = full.text().await?;
-            let res = serde_json::from_str::<T::Error>(&text)?;
+            let context = format!("send_request error (method: {})", T::method());
+            let res = deserialize_json_str::<T::Error>(&text, &context)?;
             Err(res.into())
         }
     }
@@ -192,7 +190,7 @@ impl<T, E> BetfairResponse<T, E> {
             let json = String::from_utf8_lossy(bytes.as_ref());
             tracing::debug!(response_body = %json, "Response JSON");
 
-            let res = serde_json::from_slice::<T>(&bytes)?;
+            let res = deserialize_json_bytes::<T>(&bytes, "json() success", None)?;
             Ok(Ok(res))
         } else {
             let res = parse_betfair_error::<E>(&bytes, status)?;
@@ -212,6 +210,64 @@ where
         "Failed to execute request"
     );
 
-    let error = serde_json::from_slice::<E>(bytes)?;
-    Ok(error)
+    let context = format!("parse_betfair_error (status: {})", status);
+    deserialize_json_bytes::<E>(bytes, &context, Some(status))
+}
+
+/// Helper function to deserialize JSON from a string with empty checking and error logging
+fn deserialize_json_str<T>(text: &str, context: &str) -> Result<T, ApiError>
+where
+    T: serde::de::DeserializeOwned,
+{
+    if text.trim().is_empty() {
+        tracing::warn!(context = %context, "Received empty response body");
+        return Err(ApiError::EmptyResponse);
+    }
+
+    serde_json::from_str::<T>(text).map_err(|e| {
+        tracing::error!(
+            error = %e,
+            response_body = %text,
+            context = %context,
+            "Failed to deserialize JSON from string"
+        );
+        e.into()
+    })
+}
+
+/// Helper function to deserialize JSON from bytes with empty checking and error logging
+fn deserialize_json_bytes<T>(
+    bytes: &[u8],
+    context: &str,
+    status: Option<reqwest::StatusCode>,
+) -> Result<T, ApiError>
+where
+    T: serde::de::DeserializeOwned,
+{
+    if bytes.is_empty() {
+        tracing::warn!(context = %context, "Received empty response body");
+        return Err(ApiError::EmptyResponse);
+    }
+
+    let json = String::from_utf8_lossy(bytes);
+
+    serde_json::from_slice::<T>(bytes).map_err(|e| {
+        if let Some(status) = status {
+            tracing::error!(
+                error = %e,
+                response_body = %json,
+                status = %status,
+                context = %context,
+                "Failed to deserialize JSON from bytes"
+            );
+        } else {
+            tracing::error!(
+                error = %e,
+                response_body = %json,
+                context = %context,
+                "Failed to deserialize JSON from bytes"
+            );
+        }
+        e.into()
+    })
 }
