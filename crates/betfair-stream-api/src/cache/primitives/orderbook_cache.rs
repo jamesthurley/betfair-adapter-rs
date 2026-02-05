@@ -1,23 +1,22 @@
 //! Order book cache
 
-use std::collections::HashMap;
-
 use betfair_adapter::betfair_types::handicap::Handicap;
 use betfair_adapter::betfair_types::types::sports_aping::{MarketId, SelectionId};
 use betfair_stream_types::response::order_change_message::OrderMarketChange;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use vector_map::VecMap;
 
 use super::orderbook_runner_cache::OrderBookRunner;
 
 /// Represents a cache for order book data.
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct OrderBookCache {
     market_id: MarketId,
     publish_time: DateTime<Utc>,
     closed: bool,
     /// cache of orders placed on a runner
-    runners: HashMap<(SelectionId, Option<Handicap>), OrderBookRunner>,
+    runners: VecMap<(SelectionId, Option<Handicap>), OrderBookRunner>,
 
     last_change: Option<OrderMarketChange>,
 }
@@ -31,7 +30,7 @@ impl OrderBookCache {
             market_id,
             publish_time,
             closed: false,
-            runners: HashMap::new(),
+            runners: VecMap::new(),
             last_change: None,
         }
     }
@@ -82,13 +81,13 @@ impl OrderBookCache {
 
     /// Returns a reference to the runners in the order book cache.
     #[must_use]
-    pub const fn runners(&self) -> &HashMap<(SelectionId, Option<Handicap>), OrderBookRunner> {
+    pub const fn runners(&self) -> &VecMap<(SelectionId, Option<Handicap>), OrderBookRunner> {
         &self.runners
     }
 
     /// Consumes the `OrderBookCache` and returns the runners.
     #[must_use]
-    pub fn into_runners(self) -> HashMap<(SelectionId, Option<Handicap>), OrderBookRunner> {
+    pub fn into_runners(self) -> VecMap<(SelectionId, Option<Handicap>), OrderBookRunner> {
         self.runners
     }
 

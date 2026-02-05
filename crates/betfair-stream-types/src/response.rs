@@ -1,4 +1,3 @@
-use betfair_types::NumericU8Primitive;
 use betfair_types::price::Price;
 use betfair_types::size::Size;
 use chrono::{DateTime, TimeZone as _, Utc};
@@ -18,7 +17,7 @@ pub mod order_change_message;
 pub mod status_message;
 
 /// Represents different types of response messages from the server.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "op")]
 #[serde(rename_all = "camelCase")]
 pub enum ResponseMessage {
@@ -179,7 +178,7 @@ pub struct UpdateSet3(pub Position, pub Price, pub Size);
 
 /// Represents the level of the order book.
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy, Serialize, Eq, Hash, Ord)]
-pub struct Position(pub NumericU8Primitive);
+pub struct Position(pub u8);
 
 /// A custom deserializer because while Position is always integer values from 1 to 10
 /// the Betfair API often sends them as `1.0`, `2.0`, etc. This deserializer handles

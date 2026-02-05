@@ -2,25 +2,26 @@
 
 use std::collections::HashMap;
 
-use betfair_adapter::betfair_types::NumericOrdPrimitive;
 use betfair_adapter::betfair_types::customer_strategy_ref::CustomerStrategyRef;
+use betfair_adapter::betfair_types::numeric::F64Ord;
 use betfair_adapter::betfair_types::types::sports_aping::{BetId, MarketId, SelectionId};
 use betfair_stream_types::response::UpdateSet2;
 use betfair_stream_types::response::order_change_message::{Order, StrategyMatchChange};
 use serde::{Deserialize, Serialize};
+use vector_map::VecMap;
 
 use super::available_cache::Available;
 
 /// Cache of a runner in an order book (used for order book caching)
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct OrderBookRunner {
     pub market_id: MarketId,
     pub selection_id: SelectionId,
     pub matched_lays: Available<UpdateSet2>,
     pub matched_backs: Available<UpdateSet2>,
     pub unmatched_orders: HashMap<BetId, Order>,
-    pub handicap: Option<NumericOrdPrimitive>,
-    pub strategy_matches: HashMap<CustomerStrategyRef, StrategyMatch>,
+    pub handicap: Option<F64Ord>,
+    pub strategy_matches: VecMap<CustomerStrategyRef, StrategyMatch>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
@@ -38,7 +39,7 @@ impl OrderBookRunner {
             matched_backs: Available::new(&[]),
             unmatched_orders: HashMap::new(),
             handicap: None,
-            strategy_matches: HashMap::new(),
+            strategy_matches: VecMap::new(),
         }
     }
 
@@ -62,7 +63,7 @@ impl OrderBookRunner {
 
     pub(crate) fn update_strategy_matches(
         &mut self,
-        sm: &HashMap<CustomerStrategyRef, StrategyMatchChange>,
+        sm: &VecMap<CustomerStrategyRef, StrategyMatchChange>,
     ) {
         for (key, value) in sm {
             let entry = self

@@ -29,6 +29,7 @@ tokio-stream.workspace = true
 rustls.workspace = true
 serde_json.workspace = true
 rustls-native-certs.workspace = true
+vector-map.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true
