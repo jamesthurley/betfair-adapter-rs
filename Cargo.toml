@@ -96,6 +96,7 @@ trait-variant = "0.1"
 itertools = "0.14"
 log = "0.4"
 backon = "1"
+vector-map = { version = "1.0.2", features = ["serde_impl"] }
 
 # Async
 tokio = { version = "1.0", features = ["full", "tracing"] }
