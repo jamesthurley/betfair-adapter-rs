@@ -1,7 +1,5 @@
 //! Cache of a runner in an order book (used for order book caching)
 
-use std::collections::HashMap;
-
 use betfair_adapter::betfair_types::customer_strategy_ref::CustomerStrategyRef;
 use betfair_adapter::betfair_types::numeric::F64Ord;
 use betfair_adapter::betfair_types::types::sports_aping::{BetId, MarketId, SelectionId};
@@ -19,7 +17,7 @@ pub struct OrderBookRunner {
     pub selection_id: SelectionId,
     pub matched_lays: Available<UpdateSet2>,
     pub matched_backs: Available<UpdateSet2>,
-    pub unmatched_orders: HashMap<BetId, Order>,
+    pub unmatched_orders: VecMap<BetId, Order>,
     pub handicap: Option<F64Ord>,
     pub strategy_matches: VecMap<CustomerStrategyRef, StrategyMatch>,
 }
@@ -37,7 +35,7 @@ impl OrderBookRunner {
             selection_id,
             matched_lays: Available::new(&[]),
             matched_backs: Available::new(&[]),
-            unmatched_orders: HashMap::new(),
+            unmatched_orders: VecMap::new(),
             handicap: None,
             strategy_matches: VecMap::new(),
         }
