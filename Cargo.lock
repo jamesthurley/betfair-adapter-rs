@@ -2668,8 +2668,7 @@ dependencies = [
 [[package]]
 name = "vector-map"
 version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03b34e878e32c750bb4253be124adb9da1dc93ca5d98c210787badf1e1ccdca7"
+source = "git+https://github.com/jamesthurley/vec-map-rs.git?rev=f72f543#f72f543e1449da6c69756ccd936449de63915e0a"
 dependencies = [
  "serde",
 ]
