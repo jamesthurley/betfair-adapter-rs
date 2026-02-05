@@ -17,7 +17,7 @@ pub mod order_change_message;
 pub mod status_message;
 
 /// Represents different types of response messages from the server.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "op")]
 #[serde(rename_all = "camelCase")]
 pub enum ResponseMessage {

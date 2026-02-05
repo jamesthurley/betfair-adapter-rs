@@ -81,7 +81,7 @@ pub struct Cache {
 ///
 /// `CachedMessage` represents high-level events derived from raw Betfair streaming responses,
 /// enriched with internal cache state for market and order books.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CachedMessage {
     /// A connection handshake message received from the stream,
     /// containing connection ID and related metadata.

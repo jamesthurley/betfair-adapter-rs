@@ -7,11 +7,12 @@ use betfair_types::size::Size;
 use betfair_types::types::sports_aping::{BetId, MarketId, SelectionId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use vector_map::VecMap;
 
 use super::{DataChange, DatasetChangeMessage, UpdateSet2};
 
 /// Order Change Message - represents a message containing changes to orders.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderChangeMessage(pub DatasetChangeMessage<OrderMarketChange>);
 
@@ -30,7 +31,7 @@ impl core::ops::Deref for OrderChangeMessage {
 }
 
 /// Order Market Change - represents changes to orders in a specific market.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderMarketChange {
     /// Account ID - the identifier for the account associated with the order.
@@ -51,7 +52,7 @@ pub struct OrderMarketChange {
 }
 
 /// Order Runner Change - represents changes to a specific runner's orders.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderRunnerChange {
     /// Matched Backs - matched amounts by distinct matched price on the Back side for this runner
@@ -68,8 +69,7 @@ pub struct OrderRunnerChange {
     /// Strategy Matches - Matched Backs and Matched Lays grouped by strategy reference
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "smc")]
-    pub strategy_matches:
-        Option<::std::collections::HashMap<CustomerStrategyRef, StrategyMatchChange>>,
+    pub strategy_matches: Option<VecMap<CustomerStrategyRef, StrategyMatchChange>>,
     /// Unmatched Orders - orders on this runner (selection) that are not fully matched
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "uo")]
