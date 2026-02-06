@@ -2891,7 +2891,7 @@ dependencies = [
 [[package]]
 name = "vector-map"
 version = "1.0.2"
-source = "git+https://github.com/jamesthurley/vec-map-rs.git?rev=f72f543#f72f543e1449da6c69756ccd936449de63915e0a"
+source = "git+https://github.com/jamesthurley/vec-map-rs.git?rev=7102bcd#7102bcd14df1e81321411ff310316c9afbaf08c2"
 dependencies = [
  "serde",
 ]
