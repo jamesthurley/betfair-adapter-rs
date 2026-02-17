@@ -31,6 +31,7 @@ rustls.workspace = true
 serde_json.workspace = true
 rustls-native-certs.workspace = true
 vector-map.workspace = true
+indexmap.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true
