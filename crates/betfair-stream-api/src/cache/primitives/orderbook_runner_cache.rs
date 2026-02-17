@@ -5,6 +5,7 @@ use betfair_adapter::betfair_types::numeric::F64Ord;
 use betfair_adapter::betfair_types::types::sports_aping::{BetId, MarketId, SelectionId};
 use betfair_stream_types::response::UpdateSet2;
 use betfair_stream_types::response::order_change_message::{Order, StrategyMatchChange};
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use vector_map::VecMap;
 
@@ -17,7 +18,7 @@ pub struct OrderBookRunner {
     pub selection_id: SelectionId,
     pub matched_lays: Available<UpdateSet2>,
     pub matched_backs: Available<UpdateSet2>,
-    pub unmatched_orders: VecMap<BetId, Order>,
+    pub unmatched_orders: IndexMap<BetId, Order>,
     pub handicap: Option<F64Ord>,
     pub strategy_matches: VecMap<CustomerStrategyRef, StrategyMatch>,
 }
@@ -35,7 +36,7 @@ impl OrderBookRunner {
             selection_id,
             matched_lays: Available::new(&[]),
             matched_backs: Available::new(&[]),
-            unmatched_orders: VecMap::new(),
+            unmatched_orders: IndexMap::new(),
             handicap: None,
             strategy_matches: VecMap::new(),
         }
