@@ -116,7 +116,7 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
                             }
                         } else {
                             quote! {
-                                #[serde(skip_serializing_if = "Option::is_none")]
+                                #[serde(default, skip_serializing_if = "Option::is_none")]
                                 #[builder(default, setter(strip_option))]
                                 #[serde(rename = #original_name)]
                                 #struct_parameter_derives
@@ -285,7 +285,7 @@ mod test {
                 #[serde(rename_all = "camelCase")]
                 pub struct Parameters {
                     #[doc = "A Display name for the application."]
-                    #[serde (skip_serializing_if = "Option::is_none")]
+                    #[serde (default, skip_serializing_if = "Option::is_none")]
                     #[builder (default , setter (strip_option))]
                     #[serde (rename = "appName")]
                     pub app_name: Option<std::sync::Arc<String> >,

@@ -98,44 +98,44 @@ pub enum SegmentType {
 #[serde(rename_all = "camelCase")]
 pub struct DatasetChangeMessage<T: DeserializeOwned + DataChange<T>> {
     /// Client generated unique id to link request with response (like json rpc)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<i32>,
     /// Change Type - set to indicate the type of change - if null this is a delta)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(rename = "ct")]
     pub change_type: Option<ChangeType>,
     /// Token value (non-null) should be stored and passed in a `MarketSubscriptionMessage` to
     /// resume subscription (in case of disconnect)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(rename = "clk")]
     pub clock: Option<Clock>,
     /// Heartbeat Milliseconds - the heartbeat rate (may differ from requested: bounds are 500 to
     /// 30000)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub heartbeat_ms: Option<i64>,
     /// Publish Time (in millis since epoch) that the changes were generated
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(rename = "pt")]
     pub publish_time: Option<DateTime<Utc>>,
     /// Token value (non-null) should be stored and passed in a `MarketSubscriptionMessage` to
     /// resume subscription (in case of disconnect)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(rename = "initialClk")]
     pub initial_clock: Option<InitialClock>,
     /// the modifications to T (will be null on a heartbeat)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub data: Option<Vec<T>>,
     /// Conflate Milliseconds - the conflation rate (may differ from that requested if subscription
     /// is delayed)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub conflate_ms: Option<i64>,
     /// Segment Type - if the change is split into multiple segments, this denotes the beginning
     /// and end of a change, and segments in between. Will be null if data is not segmented
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub segment_type: Option<SegmentType>,
     /// Stream status: set to null if the exchange stream data is up to date and 503 if the
     /// downstream services are experiencing latencies
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub status: Option<i32>,
 }
 
