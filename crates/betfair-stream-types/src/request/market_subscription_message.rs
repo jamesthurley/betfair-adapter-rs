@@ -8,31 +8,31 @@ use typed_builder::TypedBuilder;
 #[serde(rename_all = "camelCase")]
 pub struct MarketSubscriptionMessage {
     /// Client generated unique id to link request with response (like json rpc)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<i32>,
     /// Segmentation Enabled - allow the server to send large sets of data in segments, instead of
     /// a single block
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub segmentation_enabled: Option<bool>,
     /// Token value delta (received in `MarketChangeMessage`) that should be passed to resume a
     /// subscription
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub clk: Option<String>,
     /// Heartbeat Milliseconds - the heartbeat rate (looped back on initial image after validation:
     /// bounds are 500 to 5000)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub heartbeat_ms: Option<i64>,
     /// Token value (received in initial `MarketChangeMessage`) that should be passed to resume a
     /// subscription
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub initial_clk: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub market_filter: Option<Box<MarketFilter>>,
     /// Conflate Milliseconds - the conflation rate (looped back on initial image after validation:
     /// bounds are 0 to 120000)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub conflate_ms: Option<i64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub market_data_filter: Option<Box<MarketDataFilter>>,
 }
 
@@ -44,14 +44,14 @@ pub struct MarketSubscriptionMessage {
 /// - Reducing the size (and time) of initial images
 /// - Reducing the rate of change (as only changes matching your field filter are sent)
 pub struct MarketDataFilter {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     /// When bdatb and bdatl are sent with an empty array ("bdatb:[]"), this indicates
     /// that there's an update but this has been filtered out due to the "ladderLevels"
     /// marketDataFilter i.e. the update falls outside of the "ladderLevels" specified.
     pub ladder_levels: Option<LadderLevel>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     pub fields: Option<Vec<Fields>>,
 }
@@ -162,52 +162,52 @@ pub enum Fields {
 /// - `bsp_market`: Optional flag indicating if the market is a Best Starting Price market.
 /// - `race_types`: Optional list of race types to filter the markets.
 pub struct MarketFilter {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     /// Optional list of country codes to filter markets by country.
     pub country_codes: Option<Vec<CountryCode>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     /// Optional list of betting types to filter the markets.
     pub betting_types: Option<Vec<StreamMarketFilterBettingType>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     /// Optional flag indicating if the market allows betting while the event is in play.
     pub turn_in_play_enabled: Option<bool>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     /// Optional list of market types to filter the markets.
     pub market_types: Option<Vec<MarketType>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     /// Optional list of venues to filter the markets.
     pub venues: Option<Vec<Venue>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     /// Optional list of specific market IDs to subscribe to.
     pub market_ids: Option<Vec<MarketId>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     /// Optional list of event type IDs to filter the markets.
     pub event_type_ids: Option<Vec<EventTypeId>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     /// Optional list of specific event IDs to subscribe to.
     pub event_ids: Option<Vec<EventId>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     /// Optional flag indicating if the market is a Best Starting Price market.
     pub bsp_market: Option<bool>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(strip_option))]
     /// Optional list of race types to filter the markets.
     pub race_types: Option<Vec<String>>,
