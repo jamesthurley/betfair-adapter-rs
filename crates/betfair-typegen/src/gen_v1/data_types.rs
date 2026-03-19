@@ -169,12 +169,12 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
                 let extra = match resolve_type_result.plural {
                     TypePlural::Singular(ref value) => match value.as_str() {
                         "double" | "float" => quote! {
-                            #[serde(deserialize_with = "super::deserialize_f64_option", default)]
+                            #[serde(deserialize_with = "super::deserialize_f64_option")]
                         },
                         _ => quote! {},
                     },
                     TypePlural::Map { key: _, value: _ } => quote! {
-                        #[serde(deserialize_with = "super::deserialize_map_skip_null", default)]
+                        #[serde(deserialize_with = "super::deserialize_map_skip_null")]
                     },
                     _ => quote! {},
                 };
