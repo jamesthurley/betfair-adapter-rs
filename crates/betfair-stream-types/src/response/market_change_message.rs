@@ -75,10 +75,7 @@ pub struct MarketDefinition {
     pub timezone: String,
     /// The divisor for each way betting.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[serde(
-        deserialize_with = "betfair_types::types::deserialize_f64_option",
-        default
-    )]
+    #[serde(deserialize_with = "betfair_types::types::deserialize_f64_option")]
     pub each_way_divisor: Option<F64Ord>,
 
     /// The market regulators.
@@ -101,10 +98,7 @@ pub struct MarketDefinition {
     /// For Handicap and Line markets, the maximum value for the outcome, in market units for this
     /// market (eg 100 runs).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[serde(
-        deserialize_with = "betfair_types::types::deserialize_f64_option",
-        default
-    )]
+    #[serde(deserialize_with = "betfair_types::types::deserialize_f64_option")]
     pub line_max_unit: Option<F64Ord>,
 
     /// Indicates if the market is in play.
@@ -126,10 +120,7 @@ pub struct MarketDefinition {
     /// For Handicap and Line markets, the minimum value for the outcome, in market units for this
     /// market (eg 0 runs).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[serde(
-        deserialize_with = "betfair_types::types::deserialize_f64_option",
-        default
-    )]
+    #[serde(deserialize_with = "betfair_types::types::deserialize_f64_option")]
     pub line_min_unit: Option<F64Ord>,
 
     /// The event ID associated with the market.
@@ -190,10 +181,7 @@ pub struct MarketDefinition {
     /// runs, lineMinUnit=10, lineMaxUnit=20 and lineInterval=0.5, then valid lines include 10,
     /// 10.5, 11, 11.5 up to 20 runs.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[serde(
-        deserialize_with = "betfair_types::types::deserialize_f64_option",
-        default
-    )]
+    #[serde(deserialize_with = "betfair_types::types::deserialize_f64_option")]
     pub line_interval: Option<F64Ord>,
 
     /// The status of the market.
@@ -232,10 +220,7 @@ pub struct KeyLineSelection {
     pub id: Option<i64>,
     /// The handicap value for the selection.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[serde(
-        deserialize_with = "betfair_types::types::deserialize_f64_option",
-        default
-    )]
+    #[serde(deserialize_with = "betfair_types::types::deserialize_f64_option")]
     #[serde(rename = "hc")]
     pub handicap: Option<F64Ord>,
 }
@@ -336,10 +321,7 @@ pub struct RunnerChange {
 
     /// Handicap - the handicap of the runner (selection) (null if not applicable)
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[serde(
-        deserialize_with = "betfair_types::types::deserialize_f64_option",
-        default
-    )]
+    #[serde(deserialize_with = "betfair_types::types::deserialize_f64_option")]
     #[serde(rename = "hc")]
     pub handicap: Option<F64Ord>,
 
@@ -365,25 +347,16 @@ pub struct RunnerDefinition {
     pub id: Option<SelectionId>,
     /// Handicap - the handicap of the runner (selection) (null if not applicable)
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[serde(
-        deserialize_with = "betfair_types::types::deserialize_f64_option",
-        default
-    )]
+    #[serde(deserialize_with = "betfair_types::types::deserialize_f64_option")]
     #[serde(rename = "hc")]
     pub handicap: Option<F64Ord>,
     /// The adjustment factor for the runner.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[serde(
-        deserialize_with = "betfair_types::types::deserialize_f64_option",
-        default
-    )]
+    #[serde(deserialize_with = "betfair_types::types::deserialize_f64_option")]
     pub adjustment_factor: Option<F64Ord>,
     /// The BSP value for the runner.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[serde(
-        deserialize_with = "betfair_types::types::deserialize_f64_option",
-        default
-    )]
+    #[serde(deserialize_with = "betfair_types::types::deserialize_f64_option")]
     #[serde(rename = "bsp")]
     pub bsp: Option<F64Ord>,
     /// The status of the runner.
