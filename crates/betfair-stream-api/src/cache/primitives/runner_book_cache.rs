@@ -197,6 +197,11 @@ impl RunnerBookCache {
     }
 
     #[must_use]
+    pub const fn last_timestamp_traded(&self) -> Option<&DateTime<Utc>> {
+        self.last_timestamp_traded.as_ref()
+    }
+
+    #[must_use]
     pub const fn traded(&self) -> &Available<UpdateSet2> {
         &self.traded
     }
