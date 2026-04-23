@@ -81,7 +81,7 @@ impl MarketBookCache {
                     runner.set_last_price_traded(ltp);
                 }
                 if let Some(tv) = runner_change.total_value {
-                    runner.set_total_matched(tv);
+                    runner.set_total_matched(tv, publish_time);
                 }
                 if let Some(spn) = runner_change.starting_price_near {
                     runner.set_starting_price_near(spn);
@@ -202,6 +202,11 @@ impl MarketBookCache {
     #[must_use]
     pub const fn total_matched(&self) -> Size {
         self.total_matched
+    }
+
+    #[must_use]
+    pub const fn active(&self) -> bool {
+        self.active
     }
 }
 

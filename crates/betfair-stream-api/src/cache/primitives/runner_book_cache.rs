@@ -6,6 +6,7 @@ use betfair_adapter::betfair_types::size::Size;
 use betfair_adapter::betfair_types::types::sports_aping::SelectionId;
 use betfair_stream_types::response::market_change_message::{RunnerChange, RunnerDefinition};
 use betfair_stream_types::response::{UpdateSet2, UpdateSet3};
+use chrono::{DateTime, Utc};
 use eyre::bail;
 
 use super::available_cache::Available;
@@ -15,6 +16,7 @@ use super::available_cache::Available;
 pub struct RunnerBookCache {
     selection_id: SelectionId,
     last_price_traded: Option<Price>,
+    last_timestamp_traded: Option<DateTime<Utc>>,
     total_matched: Option<Size>,
     traded: Available<UpdateSet2>,
     available_to_back: Available<UpdateSet2>,
@@ -43,6 +45,7 @@ impl RunnerBookCache {
         Ok(Self {
             selection_id,
             last_price_traded: runner_change.last_traded_price,
+            last_timestamp_traded: None, // We don't know when the last trade happened.
             total_matched: runner_change.total_value,
             traded: runner_change
                 .traded
@@ -87,6 +90,7 @@ impl RunnerBookCache {
         Ok(Self {
             selection_id,
             last_price_traded: None,
+            last_timestamp_traded: None,
             total_matched: None,
             traded: Available::new(&[]),
             available_to_back: Available::new(&[]),
@@ -137,8 +141,11 @@ impl RunnerBookCache {
         self.last_price_traded = Some(last_price_traded);
     }
 
-    pub fn set_total_matched(&mut self, total_matched: Size) {
-        self.total_matched = Some(total_matched);
+    pub fn set_total_matched(&mut self, total_matched: Size, publish_time: DateTime<Utc>) {
+        if self.total_matched != Some(total_matched) {
+            self.last_timestamp_traded = Some(publish_time);
+            self.total_matched = Some(total_matched);
+        }
     }
 
     pub(crate) fn set_starting_price_near(&mut self, spn: Price) {
