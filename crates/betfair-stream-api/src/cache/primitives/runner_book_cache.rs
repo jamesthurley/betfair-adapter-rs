@@ -16,7 +16,7 @@ use super::available_cache::Available;
 pub struct RunnerBookCache {
     selection_id: SelectionId,
     last_price_traded: Option<Price>,
-    last_timestamp_traded: Option<DateTime<Utc>>,
+    last_traded_time: Option<DateTime<Utc>>,
     total_matched: Option<Size>,
     traded: Available<UpdateSet2>,
     available_to_back: Available<UpdateSet2>,
@@ -45,7 +45,7 @@ impl RunnerBookCache {
         Ok(Self {
             selection_id,
             last_price_traded: runner_change.last_traded_price,
-            last_timestamp_traded: None, // We don't know when the last trade happened.
+            last_traded_time: None, // We don't know when the last trade happened.
             total_matched: runner_change.total_value,
             traded: runner_change
                 .traded
@@ -90,7 +90,7 @@ impl RunnerBookCache {
         Ok(Self {
             selection_id,
             last_price_traded: None,
-            last_timestamp_traded: None,
+            last_traded_time: None,
             total_matched: None,
             traded: Available::new(&[]),
             available_to_back: Available::new(&[]),
@@ -143,7 +143,7 @@ impl RunnerBookCache {
 
     pub fn set_total_matched(&mut self, total_matched: Size, publish_time: DateTime<Utc>) {
         if self.total_matched != Some(total_matched) {
-            self.last_timestamp_traded = Some(publish_time);
+            self.last_traded_time = Some(publish_time);
             self.total_matched = Some(total_matched);
         }
     }
@@ -197,8 +197,8 @@ impl RunnerBookCache {
     }
 
     #[must_use]
-    pub const fn last_timestamp_traded(&self) -> Option<&DateTime<Utc>> {
-        self.last_timestamp_traded.as_ref()
+    pub const fn last_traded_time(&self) -> Option<DateTime<Utc>> {
+        self.last_traded_time
     }
 
     #[must_use]
