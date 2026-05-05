@@ -18,7 +18,8 @@ pub struct OrderBookRunner {
     pub selection_id: SelectionId,
     pub matched_lays: Available<UpdateSet2>,
     pub matched_backs: Available<UpdateSet2>,
-    pub unmatched_orders: IndexMap<BetId, Order>,
+    pub unmatched_orders:
+        IndexMap<BetId, Order, std::hash::BuildHasherDefault<rustc_hash::FxHasher>>,
     pub handicap: Option<F64Ord>,
     pub strategy_matches: VecMap<CustomerStrategyRef, StrategyMatch>,
 }
@@ -36,7 +37,7 @@ impl OrderBookRunner {
             selection_id,
             matched_lays: Available::new(&[]),
             matched_backs: Available::new(&[]),
-            unmatched_orders: IndexMap::new(),
+            unmatched_orders: Default::default(),
             handicap: None,
             strategy_matches: VecMap::new(),
         }
