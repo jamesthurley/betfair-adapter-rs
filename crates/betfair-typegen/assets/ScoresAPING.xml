@@ -408,57 +408,7 @@
 
     <simpleType name="FinishedStatus" type="string"/>
 
-    <simpleType name="StrokeType" type="string">
-        <validValues>
-            <value name="time"/>
-            <value name="occ_started"/>
-            <value name="occ_ended"/>
-            <value name="fault"/>
-            <value name="foofault"/>
-            <value name="ace"/>
-            <value name="let"/>
-            <value name="point"/>
-            <value name="pointstart"/>
-            <value name="doublefault"/>
-            <value name="pointpenaltycode"/>
-            <value name="pointpenaltytime"/>
-            <value name="gamepenalty"/>
-            <value name="time_violation_A"/>
-            <value name="time_violation_B"/>
-            <value name="code_violation_A"/>
-            <value name="code_violation_B"/>
-            <value name="toilet_break"/>
-            <value name="medicalTimeout"/>
-            <value name="overrule"/>
-            <value name="challenge"/>
-            <value name="challenge_A_won"/>
-            <value name="challenge_A_lost"/>
-            <value name="challenge_B_won"/>
-            <value name="challenge_B_lost"/>
-            <value name="ball_mark_inspection"/>
-            <value name="default_A"/>
-            <value name="default_B"/>
-            <value name="retire_A"/>
-            <value name="retire_B"/>
-            <value name="walkover_A"/>
-            <value name="walkover_B"/>
-            <value name="swop_server"/>
-            <value name="swop_receiver"/>
-            <value name="suspended_rain"/>
-            <value name="suspended_darkness"/>
-            <value name="suspended_pause"/>
-            <value name="suspended_heat"/>
-            <value name="suspended_other"/>
-            <value name="unsuspended"/>
-            <value name="ten_min_heatbreak_started"/>
-            <value name="ten_min_heatbreak_ended"/>
-            <value name="ten_min_heatbreak_declined"/>
-            <value name="re_warmup"/>
-            <value name="play_restarted"/>
-            <value name="Suspended"/>
-            <value name="unknown"/>
-        </validValues>
-    </simpleType>
+    <simpleType name="StrokeType" type="string"/>
 
     <simpleType name="UpdateSequence" type="long"/>
     <simpleType name="EventId" type="string"/>

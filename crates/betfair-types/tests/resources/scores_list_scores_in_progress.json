@@ -1,0 +1,36 @@
+[
+  {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "eventId": "35606560",
+        "eventTypeId": "2",
+        "updateContext": {
+          "eventTime": "16:03:39",
+          "lastUpdated": "2026-05-14T16:03:39.000Z",
+          "updateSequence": 277,
+          "updateType": "score"
+        },
+        "values": {
+          "player2PointsWon": "0",
+          "player1": "9635538",
+          "player2": "8962036",
+          "bestOfSets": "3",
+          "player1SetScores": "7,2",
+          "player2GamesWon": "1",
+          "player1GamesWon": "2",
+          "player1SetsWon": "1",
+          "player2SetsWon": "0",
+          "player2SetScores": "6,1",
+          "isLive": "1",
+          "player1PointsWon": "30",
+          "eventTypeStatus": "inPlay",
+          "startDate": "2026-05-14T14:15:00.000Z"
+        },
+        "eventStatus": "IN_PROGRESS",
+        "responseCode": "OK"
+      }
+    ],
+    "id": 1
+  }
+]
