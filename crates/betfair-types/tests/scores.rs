@@ -7,7 +7,19 @@ fn parse_scores_fixtures() {
         "./tests/resources/scores_list_scores_in_progress.json",
         "./tests/resources/scores_list_scores_pending.json",
     ] {
-        parse_json_rpc_result::<list_scores::ReturnType>(path);
+        let scores = parse_json_rpc_result::<list_scores::ReturnType>(path);
+
+        assert!(!scores.is_empty(), "{path}");
+        let mut converted = 0;
+        for score in &scores {
+            let Some(values) = score.tennis_values().unwrap() else {
+                continue;
+            };
+
+            converted += 1;
+            assert!(values.player1.is_some(), "{path}");
+        }
+        assert!(converted > 0, "{path}");
     }
 }
 
@@ -20,7 +32,25 @@ fn parse_incidents_fixtures() {
         "./tests/resources/scores_list_incidents_in_progress.json",
         "./tests/resources/scores_list_incidents_pending.json",
     ] {
-        parse_json_rpc_result::<list_incidents::ReturnType>(path);
+        let incidents_by_event = parse_json_rpc_result::<list_incidents::ReturnType>(path);
+
+        assert!(!incidents_by_event.is_empty(), "{path}");
+        let mut converted = 0;
+        for incident in incidents_by_event
+            .iter()
+            .flat_map(|incidents| incidents.incidents.values())
+        {
+            let Some(values) = incident.tennis_values().unwrap() else {
+                continue;
+            };
+
+            converted += 1;
+            assert!(
+                values.player1.is_some() || values.stroke_type.is_some(),
+                "{path}"
+            );
+        }
+        assert!(converted > 0, "{path}");
     }
 }
 
@@ -28,9 +58,11 @@ fn parse_incidents_fixtures() {
 fn parse_available_events_fixture() {
     use betfair_types::types::scores_aping::list_available_events;
 
-    parse_json_rpc_result::<list_available_events::ReturnType>(
+    let events = parse_json_rpc_result::<list_available_events::ReturnType>(
         "./tests/resources/scores_list_available_events.json",
     );
+
+    assert!(!events.is_empty());
 }
 
 #[test]
@@ -62,15 +94,13 @@ fn stroke_type_accepts_unknown_values() {
     assert!(incident_values.stroke_type.is_some());
 }
 
-fn parse_json_rpc_result<T>(path: &str)
+fn parse_json_rpc_result<T>(path: &str) -> T
 where
-    T: serde::de::DeserializeOwned + IntoIterator,
+    T: serde::de::DeserializeOwned,
 {
     use json_rpc_types::Response;
 
     let data = std::fs::read_to_string(path).unwrap();
     let responses = serde_json::from_str::<Vec<Response<T, serde_json::Value>>>(&data).unwrap();
-    let result = responses.into_iter().next().unwrap().payload.unwrap();
-
-    assert!(result.into_iter().next().is_some());
+    responses.into_iter().next().unwrap().payload.unwrap()
 }

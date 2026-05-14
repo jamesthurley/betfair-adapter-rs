@@ -163,8 +163,8 @@
         <parameter name="player1SetScores" type="string"/>
         <parameter name="player2SetScores" type="string"/>
         <parameter name="isLive" type="string"/>
-        <parameter name="eventTypeStatus" type="EventTypeStatus"/>
-        <parameter name="startDate" type="dateTime"/>
+        <parameter name="eventTypeStatus" type="string"/>
+        <parameter name="startDate" type="string"/>
         <parameter name="tieBreakType" type="string"/>
     </dataType>
 
@@ -210,10 +210,10 @@
         <parameter name="tossChoice" type="string"/>
         <parameter name="tossWinner" type="string"/>
         <parameter name="firstToServe" type="string"/>
-        <parameter name="match_state" type="MatchState">
+        <parameter name="match_state" type="string">
             <description>The state of the match.</description>
         </parameter>
-        <parameter name="finished" type="FinishedStatus">
+        <parameter name="finished" type="string">
             <description>Current state. Match not finished = 0, match finished &gt; 0.</description>
         </parameter>
         <parameter name="surname1" type="string">
@@ -255,7 +255,7 @@
         <parameter name="lastStrokeId" type="string"/>
         <parameter name="server" type="string"/>
         <parameter name="strokeIndex" type="string"/>
-        <parameter name="strokeType" type="StrokeType"/>
+        <parameter name="strokeType" type="string"/>
         <parameter name="strokeId" type="string"/>
         <parameter name="utcTime" type="string"/>
         <parameter name="currentSet" type="string"/>
@@ -275,8 +275,8 @@
         <parameter name="wonBy" type="string"/>
         <parameter name="matchTime" type="string"/>
         <parameter name="isLive" type="string"/>
-        <parameter name="eventTypeStatus" type="EventTypeStatus"/>
-        <parameter name="startDate" type="dateTime"/>
+        <parameter name="eventTypeStatus" type="string"/>
+        <parameter name="startDate" type="string"/>
     </dataType>
 
     <exceptionType name="APINGException" prefix="SCORES">

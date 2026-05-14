@@ -7,6 +7,7 @@ pub mod customer_strategy_ref;
 pub mod handicap;
 pub mod numeric;
 pub mod price;
+pub mod scores;
 pub mod size;
 
 #[cfg(test)]
