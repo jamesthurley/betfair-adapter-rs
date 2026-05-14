@@ -65,7 +65,7 @@ impl<T: CodeInjector> GeneratorStrategy for GenV1GeneratorStrategy<T> {
         let rpc_calls = aping_.rpc_calls().iter().sorted_by_key(|v| v.0).fold(
             quote! {},
             |acc, (_name, data)| {
-                let iter_rpc_call = self.generate_rpc_call(data);
+                let iter_rpc_call = self.generate_rpc_call_with_transport(data, aping_.transport());
 
                 quote! {
                     #acc
@@ -112,6 +112,12 @@ impl<T: CodeInjector> GeneratorStrategy for GenV1GeneratorStrategy<T> {
             top_level_preamble = quote! {
                 #top_level_preamble
                 pub mod sports_aping;
+            };
+        }
+        if settings.scores_aping() {
+            top_level_preamble = quote! {
+                #top_level_preamble
+                pub mod scores_aping;
             };
         }
         if settings.stream_api() {

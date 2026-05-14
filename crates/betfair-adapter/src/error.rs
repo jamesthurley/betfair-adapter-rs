@@ -18,6 +18,10 @@ pub enum ApiError {
     #[error(transparent)]
     HeartbeatApingException(#[from] betfair_types::types::heartbeat_aping::ApingException),
 
+    /// Represents an error from the Scores Aping API.
+    #[error(transparent)]
+    ScoresApingException(#[from] betfair_types::types::scores_aping::ApingException),
+
     /// Represents an error from the Reqwest HTTP client.
     #[error(transparent)]
     ReqwestError(#[from] reqwest::Error),

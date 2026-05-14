@@ -1,7 +1,8 @@
 use core::marker::PhantomData;
 
 use betfair_types::keep_alive;
-use betfair_types::types::BetfairRpcRequest;
+use betfair_types::types::{BetfairRpcRequest, BetfairRpcTransport};
+use serde::Deserialize;
 use tracing::instrument;
 
 use crate::{ApiError, Authenticated, BetfairRpcClient};
@@ -22,27 +23,9 @@ impl BetfairRpcClient<Authenticated> {
         T::Error: serde::de::DeserializeOwned,
         ApiError: From<<T as BetfairRpcRequest>::Error>,
     {
-        let endpoint = self.rest_base.url().join(T::method())?;
-        let full = self
-            .state
-            .authenticated_client
-            .post(endpoint.as_str())
-            .json(&request)
-            .send()
-            .await?;
-
-        if full.status().is_success() {
-            let text = full.text().await?;
-            if text.trim().is_empty() {
-                tracing::warn!("Received empty response body");
-                return Err(ApiError::EmptyResponse);
-            }
-            let res = serde_json::from_str::<T::Res>(&text)?;
-            Ok(res)
-        } else {
-            let text = full.text().await?;
-            let res = serde_json::from_str::<T::Error>(&text)?;
-            Err(res.into())
+        match self.build_request(request)?.execute().await?.json().await? {
+            Ok(res) => Ok(res),
+            Err(err) => Err(err.into()),
         }
     }
 
@@ -59,19 +42,35 @@ impl BetfairRpcClient<Authenticated> {
         T::Res: serde::de::DeserializeOwned + core::fmt::Debug,
         T::Error: serde::de::DeserializeOwned,
     {
-        let endpoint = self.rest_base.url().join(T::method())?;
+        let endpoint = self.endpoint_for_request::<T>()?;
         let client = self.state.authenticated_client.clone();
-        let reqwest_req = client
-            .request(reqwest::Method::POST, endpoint.as_str())
-            .json(&request)
-            .build()?;
+        let request_builder = client.request(reqwest::Method::POST, endpoint.as_str());
+        let reqwest_req = match T::transport() {
+            BetfairRpcTransport::Rest => request_builder.json(&request).build()?,
+            BetfairRpcTransport::JsonRpc => request_builder
+                .json(&[JsonRpcRequest::new(T::method(), &request)])
+                .build()?,
+        };
 
         Ok(BetfairRequest {
             request: reqwest_req,
             client,
             result: PhantomData,
             err: PhantomData,
+            transport: T::transport(),
         })
+    }
+
+    fn endpoint_for_request<T>(&self) -> Result<url::Url, ApiError>
+    where
+        T: BetfairRpcRequest,
+    {
+        match T::transport() {
+            BetfairRpcTransport::Rest => Ok(self.rest_base.url().join(T::method())?),
+            BetfairRpcTransport::JsonRpc => {
+                endpoint_from_path(self.rest_base.url(), T::endpoint_path())
+            }
+        }
     }
 
     /// You can use Keep Alive to extend the session timeout period. The minimum session time is
@@ -92,6 +91,7 @@ impl BetfairRpcClient<Authenticated> {
             client,
             result: PhantomData,
             err: PhantomData,
+            transport: BetfairRpcTransport::Rest,
         })
     }
 
@@ -109,6 +109,7 @@ impl BetfairRpcClient<Authenticated> {
             client,
             result: PhantomData,
             err: PhantomData,
+            transport: BetfairRpcTransport::Rest,
         })
     }
 }
@@ -120,6 +121,7 @@ pub struct BetfairRequest<T, E> {
     client: reqwest::Client,
     result: PhantomData<T>,
     err: PhantomData<E>,
+    transport: BetfairRpcTransport,
 }
 
 impl<T, E> BetfairRequest<T, E> {
@@ -136,6 +138,7 @@ impl<T, E> BetfairRequest<T, E> {
             result: PhantomData,
             err: PhantomData,
             span,
+            transport: self.transport,
         })
     }
 }
@@ -148,6 +151,7 @@ pub struct BetfairResponse<T, E> {
     err: PhantomData<E>,
     // this span carries the context of the `BetfairRequest`
     span: tracing::Span,
+    transport: BetfairRpcTransport,
 }
 
 impl<T, E> BetfairResponse<T, E> {
@@ -170,11 +174,21 @@ impl<T, E> BetfairResponse<T, E> {
         E: serde::de::DeserializeOwned,
     {
         let status = self.response.status();
+        let transport = self.transport;
         if status.is_success() {
-            Ok(Ok(()))
+            if transport == BetfairRpcTransport::Rest {
+                Ok(Ok(()))
+            } else {
+                let bytes = self.response.bytes().await?;
+                if bytes.is_empty() {
+                    return Ok(Ok(()));
+                }
+                let res = parse_json_rpc_response::<serde_json::Value, E>(&bytes)?;
+                Ok(res.map(|_| ()))
+            }
         } else {
             let bytes = self.response.bytes().await?;
-            let res = parse_betfair_error::<E>(&bytes, status)?;
+            let res = parse_betfair_error::<E>(&bytes, status, transport)?;
             Ok(Err(res))
         }
     }
@@ -187,21 +201,87 @@ impl<T, E> BetfairResponse<T, E> {
         E: serde::de::DeserializeOwned,
     {
         let status = self.response.status();
+        let transport = self.transport;
         let bytes = self.response.bytes().await?;
+        if bytes.is_empty() {
+            tracing::warn!("Received empty response body");
+            return Err(ApiError::EmptyResponse);
+        }
         if status.is_success() {
             let json = String::from_utf8_lossy(bytes.as_ref());
             tracing::debug!(response_body = %json, "Response JSON");
 
-            let res = serde_json::from_slice::<T>(&bytes)?;
-            Ok(Ok(res))
+            match transport {
+                BetfairRpcTransport::Rest => Ok(Ok(serde_json::from_slice::<T>(&bytes)?)),
+                BetfairRpcTransport::JsonRpc => parse_json_rpc_response::<T, E>(&bytes),
+            }
         } else {
-            let res = parse_betfair_error::<E>(&bytes, status)?;
+            let res = parse_betfair_error::<E>(&bytes, status, transport)?;
             Ok(Err(res))
         }
     }
 }
 
-fn parse_betfair_error<E>(bytes: &[u8], status: reqwest::StatusCode) -> Result<E, ApiError>
+#[derive(Debug, serde::Serialize)]
+struct JsonRpcRequest<'a, T> {
+    jsonrpc: &'static str,
+    method: &'static str,
+    params: &'a T,
+    id: u64,
+}
+
+impl<'a, T> JsonRpcRequest<'a, T> {
+    const fn new(method: &'static str, params: &'a T) -> Self {
+        Self {
+            jsonrpc: "2.0",
+            method,
+            params,
+            id: 1,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum JsonRpcPayload<T> {
+    Batch(Vec<JsonRpcEnvelope<T>>),
+    Single(JsonRpcEnvelope<T>),
+}
+
+#[derive(Debug, Deserialize)]
+struct JsonRpcEnvelope<T> {
+    result: Option<T>,
+    error: Option<JsonRpcError>,
+}
+
+#[derive(Debug, Deserialize, serde::Serialize)]
+struct JsonRpcError {
+    code: Option<i64>,
+    message: Option<String>,
+    data: Option<serde_json::Value>,
+}
+
+fn endpoint_from_path(base: &url::Url, endpoint_path: &str) -> Result<url::Url, ApiError> {
+    if let Ok(url) = url::Url::parse(endpoint_path) {
+        return Ok(url);
+    }
+
+    if endpoint_path.starts_with('/') {
+        let mut endpoint = base.clone();
+        endpoint.set_path(endpoint_path);
+        endpoint.set_query(None);
+        endpoint.set_fragment(None);
+        Ok(endpoint)
+    } else {
+        Ok(base.join(endpoint_path)?)
+    }
+}
+
+fn parse_betfair_error<E>(
+    bytes: &[u8],
+    status: reqwest::StatusCode,
+    transport: BetfairRpcTransport,
+) -> Result<E, ApiError>
 where
     E: serde::de::DeserializeOwned,
 {
@@ -212,6 +292,68 @@ where
         "Failed to execute request"
     );
 
-    let error = serde_json::from_slice::<E>(bytes)?;
-    Ok(error)
+    match transport {
+        BetfairRpcTransport::Rest => Ok(serde_json::from_slice::<E>(bytes)?),
+        BetfairRpcTransport::JsonRpc => parse_json_rpc_response::<serde_json::Value, E>(bytes)?
+            .map_or_else(Ok, |_| {
+                serde_json::from_slice::<E>(bytes).map_err(Into::into)
+            }),
+    }
+}
+
+fn parse_json_rpc_response<T, E>(bytes: &[u8]) -> Result<Result<T, E>, ApiError>
+where
+    T: serde::de::DeserializeOwned,
+    E: serde::de::DeserializeOwned,
+{
+    let payload = serde_json::from_slice::<JsonRpcPayload<T>>(bytes)?;
+    let envelope = match payload {
+        JsonRpcPayload::Batch(mut batch) => {
+            if batch.is_empty() {
+                return Err(ApiError::EmptyResponse);
+            }
+            batch.remove(0)
+        }
+        JsonRpcPayload::Single(single) => single,
+    };
+
+    if let Some(result) = envelope.result {
+        return Ok(Ok(result));
+    }
+
+    if let Some(error) = envelope.error {
+        return parse_json_rpc_error(error).map(Err);
+    }
+
+    Err(ApiError::EmptyResponse)
+}
+
+fn parse_json_rpc_error<E>(error: JsonRpcError) -> Result<E, ApiError>
+where
+    E: serde::de::DeserializeOwned,
+{
+    if let Some(data) = error.data {
+        return parse_error_value(data);
+    }
+
+    parse_error_value(serde_json::to_value(error)?)
+}
+
+fn parse_error_value<E>(value: serde_json::Value) -> Result<E, ApiError>
+where
+    E: serde::de::DeserializeOwned,
+{
+    match serde_json::from_value::<E>(value.clone()) {
+        Ok(error) => Ok(error),
+        Err(direct_err) => {
+            if let serde_json::Value::Object(map) = value {
+                for inner in map.into_values() {
+                    if let Ok(error) = serde_json::from_value::<E>(inner) {
+                        return Ok(error);
+                    }
+                }
+            }
+            Err(direct_err.into())
+        }
+    }
 }

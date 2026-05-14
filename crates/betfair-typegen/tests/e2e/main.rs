@@ -23,6 +23,7 @@ fn assert_root_module() {
         )
     );
     assert!(output_mod.contains(quote::quote! { pub mod sports_aping; }.to_string().as_str()));
+    assert!(output_mod.contains(quote::quote! { pub mod scores_aping; }.to_string().as_str()));
     assert!(!output_mod.contains(quote::quote! { pub mod stream_api; }.to_string().as_str()));
-    assert_eq!(output.submodules().len(), 3);
+    assert_eq!(output.submodules().len(), 4);
 }

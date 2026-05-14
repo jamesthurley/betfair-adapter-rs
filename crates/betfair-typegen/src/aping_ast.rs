@@ -13,6 +13,21 @@ use self::data_type::{
 use self::rpc_calls::{Exception, Param, Returns, RpcCall};
 use self::types::{Comment, Name};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum ApiTransport {
+    Rest,
+    JsonRpc {
+        endpoint_path: String,
+        method_prefix: String,
+    },
+}
+
+impl ApiTransport {
+    pub(crate) const fn rest() -> Self {
+        Self::Rest
+    }
+}
+
 #[derive(Debug, Clone, TypedBuilder)]
 pub(crate) struct Aping {
     #[builder(default)]
@@ -31,10 +46,20 @@ pub(crate) struct Aping {
     rpc_calls: HashMap<Name, rpc_calls::RpcCall>,
     #[builder(default)]
     data_types: HashMap<Name, data_type::DataType>,
+    #[builder(default = ApiTransport::rest())]
+    transport: ApiTransport,
 }
 
 impl From<Interface> for Aping {
     fn from(val: Interface) -> Self {
+        let transport = match val.transport.as_deref() {
+            Some("json-rpc" | "jsonRpc" | "json_rpc" | "JSON-RPC") => ApiTransport::JsonRpc {
+                endpoint_path: val.endpoint_path.unwrap_or_default(),
+                method_prefix: val.method_prefix.unwrap_or_default(),
+            },
+            _ => ApiTransport::Rest,
+        };
+
         let aping_default = Self {
             name: Name(val.name),
             owner: Name(val.owner),
@@ -44,6 +69,7 @@ impl From<Interface> for Aping {
             top_level_docs: vec![],
             rpc_calls: HashMap::new(),
             data_types: HashMap::new(),
+            transport,
         };
 
         val.items.iter().fold(aping_default, |mut aping, x| {
@@ -342,6 +368,10 @@ impl Aping {
     pub(crate) const fn data_types(&self) -> &HashMap<Name, data_type::DataType> {
         &self.data_types
     }
+
+    pub(crate) const fn transport(&self) -> &ApiTransport {
+        &self.transport
+    }
 }
 
 trait Prism<T> {
@@ -543,6 +573,7 @@ mod tests {
             top_level_docs: vec![],
             rpc_calls: HashMap::new(),
             data_types: HashMap::new(),
+            transport: ApiTransport::Rest,
         }
     }
 

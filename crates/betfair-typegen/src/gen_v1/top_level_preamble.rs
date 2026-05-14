@@ -7,11 +7,25 @@ use super::injector::CodeInjector;
 impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
     pub(crate) fn generate_transport_layer(&self) -> TokenStream {
         quote! {
+            #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+            pub enum BetfairRpcTransport {
+                Rest,
+                JsonRpc,
+            }
+
             pub trait BetfairRpcRequest {
                 type Res;
                 type Error;
 
                 fn method() -> &'static str;
+
+                fn transport() -> BetfairRpcTransport {
+                    BetfairRpcTransport::Rest
+                }
+
+                fn endpoint_path() -> &'static str {
+                    ""
+                }
             }
 
             use std::fmt;

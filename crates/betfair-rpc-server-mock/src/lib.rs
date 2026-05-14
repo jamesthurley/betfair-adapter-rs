@@ -3,7 +3,7 @@ use betfair_adapter::{
     ApplicationKey, BetfairConfigBuilder, BetfairRpcClient, BotLogin, Identity, InteractiveLogin,
     KeepAlive, Logout, Password, RestBase, SecretProvider, Stream, Unauthenticated, Username,
 };
-use betfair_types::types::BetfairRpcRequest;
+use betfair_types::types::{BetfairRpcRequest, BetfairRpcTransport};
 use serde_json::json;
 pub use wiremock;
 use wiremock::matchers::{PathExactMatcher, method, path};
@@ -25,7 +25,10 @@ pub const SESSION_TOKEN: &str = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
 #[must_use]
 pub fn rpc_path<T: BetfairRpcRequest>() -> String {
-    format!("{REST_URL}{}", T::method())
+    match T::transport() {
+        BetfairRpcTransport::Rest => format!("{REST_URL}{}", T::method()),
+        BetfairRpcTransport::JsonRpc => T::endpoint_path().to_owned(),
+    }
 }
 
 pub struct Server {
@@ -227,12 +230,27 @@ impl Server {
     where
         T::Error: serde::Serialize,
     {
+        let response = match T::transport() {
+            BetfairRpcTransport::Rest => serde_json::to_value(response).unwrap(),
+            BetfairRpcTransport::JsonRpc => json!([
+                {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32099,
+                        "message": "APINGException",
+                        "data": serde_json::to_value(response).unwrap()
+                    },
+                    "id": 1
+                }
+            ]),
+        };
+
         self.mock_error(
             "POST",
             path(rpc_path::<T>()),
             &rpc_path::<T>(),
             true,
-            serde_json::to_value(response).unwrap(),
+            response,
         )
     }
 
@@ -240,12 +258,23 @@ impl Server {
         &self,
         response: serde_json::Value,
     ) -> Mock {
+        let response = match T::transport() {
+            BetfairRpcTransport::Rest => response,
+            BetfairRpcTransport::JsonRpc => json!([
+                {
+                    "jsonrpc": "2.0",
+                    "result": response,
+                    "id": 1
+                }
+            ]),
+        };
+
         self.mock_success(
             "POST",
             path(rpc_path::<T>()),
             &rpc_path::<T>(),
             true,
-            serde_json::to_value(response).unwrap(),
+            response,
         )
     }
 }

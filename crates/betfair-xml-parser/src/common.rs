@@ -19,11 +19,12 @@ pub struct Value {
     /// The name of the value
     pub name: String,
     /// The description of the value
+    #[serde(default)]
     pub description: Description,
 }
 
 /// The description tag
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Description {
     /// The value of the description
     #[serde(rename = "$value")]
@@ -40,6 +41,7 @@ pub struct Parameter {
     /// The type of the parameter
     pub r#type: String,
     /// Vector of possible values enclosed within the parameter
+    #[serde(default)]
     #[serde(rename = "$value")]
     pub items: Vec<ParameterItem>,
 }

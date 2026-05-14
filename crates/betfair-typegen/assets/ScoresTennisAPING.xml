@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface name="ScoresAPING" owner="BDP" version="1.0.0" date="now()" namespace="com.betfair.scores.api"
+           transport="json-rpc" endpointPath="/exchange/scores/json-rpc/v1" methodPrefix="ScoresAPING/v1.0/"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <description>Scores API Tennis</description>
+
+    <operation name="listAvailableEvents" since="1.0.0">
+        <description>Search for events that have live score data available.</description>
+        <parameters>
+            <request>
+                <parameter name="eventIds" type="set(EventId)">
+                    <description>Optionally restricts the results to the specified event IDs.</description>
+                </parameter>
+                <parameter name="eventTypeIds" type="set(EventTypeId)">
+                    <description>Optionally restricts the results to the specified event type IDs.</description>
+                </parameter>
+                <parameter name="eventStatus" type="set(EventStatus)">
+                    <description>Optionally restricts the results to the specified event status.</description>
+                </parameter>
+            </request>
+            <simpleResponse type="list(AvailableEvent)">
+                <description>List of retrieved available events</description>
+            </simpleResponse>
+            <exceptions>
+                <exception type="APINGException">
+                    <description>Generic exception that is thrown if this operation fails for any reason.</description>
+                </exception>
+            </exceptions>
+        </parameters>
+    </operation>
+
+    <operation name="listScores" since="1.0.0">
+        <description>Returns a list of current scores for the given events.</description>
+        <parameters>
+            <request>
+                <parameter mandatory="true" name="updateKeys" type="list(UpdateKey)">
+                    <description>The filter to select desired markets. All markets that match the criteria in the filter are selected.</description>
+                </parameter>
+            </request>
+            <simpleResponse type="list(Score)">
+                <description>List of retrieved scores</description>
+            </simpleResponse>
+            <exceptions>
+                <exception type="APINGException">
+                    <description>Generic exception that is thrown if this operation fails for any reason.</description>
+                </exception>
+            </exceptions>
+        </parameters>
+    </operation>
+
+    <operation name="listIncidents" since="1.0.0">
+        <description>Returns a list of incidents for the given events.</description>
+        <parameters>
+            <request>
+                <parameter mandatory="true" name="updateKeys" type="list(UpdateKey)">
+                    <description>The filter to select desired markets. All markets that match the criteria in the filter are selected.</description>
+                </parameter>
+            </request>
+            <simpleResponse type="list(Incidents)">
+                <description>List of retrieved incidents</description>
+            </simpleResponse>
+            <exceptions>
+                <exception type="APINGException">
+                    <description>Generic exception that is thrown if this operation fails for any reason.</description>
+                </exception>
+            </exceptions>
+        </parameters>
+    </operation>
+
+    <dataType name="Incidents">
+        <description>Key/value pairs containing incidents for an event.</description>
+        <parameter mandatory="true" name="eventId" type="EventId"/>
+        <parameter name="eventTypeId" type="EventTypeId"/>
+        <parameter name="eventStatus" type="EventStatus"/>
+        <parameter mandatory="true" name="responseCode" type="ResponseCode"/>
+        <parameter mandatory="true" name="incidents" type="map(long,Incident)"/>
+    </dataType>
+
+    <dataType name="Incident">
+        <description>Key/value pairs for a single incident update.</description>
+        <parameter mandatory="true" name="updateContext" type="UpdateContext"/>
+        <parameter name="values" type="map(string,string)">
+            <description>Dynamic tennis incident fields. See TennisIncidentValues for documented keys.</description>
+        </parameter>
+    </dataType>
+
+    <dataType name="Score">
+        <description>Key/value pairs containing the current score for an event.</description>
+        <parameter mandatory="true" name="eventId" type="EventId"/>
+        <parameter name="eventTypeId" type="EventTypeId"/>
+        <parameter name="eventStatus" type="EventStatus"/>
+        <parameter mandatory="true" name="responseCode" type="ResponseCode"/>
+        <parameter mandatory="true" name="updateContext" type="UpdateContext"/>
+        <parameter name="values" type="map(string,string)">
+            <description>Dynamic tennis score fields. See TennisScoreValues for documented keys.</description>
+        </parameter>
+    </dataType>
+
+    <dataType name="AvailableEvent">
+        <description>Available event with live score data.</description>
+        <parameter mandatory="true" name="eventId" type="EventId"/>
+        <parameter mandatory="true" name="eventTypeId" type="EventTypeId"/>
+        <parameter mandatory="true" name="eventStatus" type="EventStatus"/>
+    </dataType>
+
+    <dataType name="RaceDetails">
+        <description>Race details. Included in the published Scores API type definitions, although not used by the Tennis operations.</description>
+        <parameter mandatory="true" name="meetingId" type="MeetingId"/>
+        <parameter mandatory="true" name="raceId" type="RaceId"/>
+        <parameter mandatory="true" name="raceStatus" type="RaceStatus"/>
+        <parameter name="lastUpdated" type="LastUpdated">
+            <description>This is the time the data was last updated.</description>
+        </parameter>
+        <parameter mandatory="true" name="responseCode" type="ResponseCode"/>
+    </dataType>
+
+    <dataType name="UpdateContext">
+        <description>Update time.</description>
+        <parameter name="eventTime" type="EventTime">
+            <description>This is the eventTime as at the last updated time; format is event type specific.</description>
+        </parameter>
+        <parameter mandatory="true" name="lastUpdated" type="LastUpdated">
+            <description>This is the time the data was last updated.</description>
+        </parameter>
+        <parameter mandatory="true" name="updateSequence" type="UpdateSequence">
+            <description>This is the unique identifier associated to each update of the data.</description>
+        </parameter>
+        <parameter mandatory="true" name="updateType" type="UpdateType">
+            <description>This is the type of update.</description>
+        </parameter>
+    </dataType>
+
+    <dataType name="UpdateKey">
+        <description>Key/value pairs used to request score or incident updates.</description>
+        <parameter mandatory="true" name="eventId" type="EventId"/>
+        <parameter name="lastUpdateSequenceProcessed" type="UpdateSequence">
+            <description>Last update processed by client. If not provided, then all data will be returned for the event.</description>
+        </parameter>
+    </dataType>
+
+    <!--
+        These two data types are not the actual wire format for Score.values / Incident.values,
+        which the API documents as Map&lt;String,String&gt;. They are included as a convenient,
+        documented view of known tennis keys for clients that want to post-process the dynamic map.
+    -->
+    <dataType name="TennisScoreValues">
+        <description>Known keys observed/documented in Score.values for tennis. Values are returned as strings in the API.</description>
+        <parameter name="player1" type="string">
+            <description>Player 1 ID.</description>
+        </parameter>
+        <parameter name="player2" type="string">
+            <description>Player 2 ID.</description>
+        </parameter>
+        <parameter name="bestOfSets" type="string">
+            <description>Number of sets for the match.</description>
+        </parameter>
+        <parameter name="player1SetsWon" type="string"/>
+        <parameter name="player2SetsWon" type="string"/>
+        <parameter name="player1GamesWon" type="string"/>
+        <parameter name="player2GamesWon" type="string"/>
+        <parameter name="player1PointsWon" type="string"/>
+        <parameter name="player2PointsWon" type="string"/>
+        <parameter name="player1SetScores" type="string"/>
+        <parameter name="player2SetScores" type="string"/>
+        <parameter name="isLive" type="string"/>
+        <parameter name="eventTypeStatus" type="EventTypeStatus"/>
+        <parameter name="startDate" type="dateTime"/>
+        <parameter name="tieBreakType" type="string"/>
+    </dataType>
+
+    <dataType name="TennisIncidentValues">
+        <description>Known keys observed/documented in Incident.values for tennis. Values are returned as strings in the API.</description>
+        <parameter name="type" type="string"/>
+        <parameter name="matchid" type="string">
+            <description>Tournament ID:match ID:year.</description>
+        </parameter>
+        <parameter name="id" type="string">
+            <description>Current incremental ID, updated on every change.</description>
+        </parameter>
+        <parameter name="packet_id" type="string">
+            <description>A unique ID per match, per sent JSON packet, across packet types.</description>
+        </parameter>
+        <parameter name="utc_timestamp" type="string">
+            <description>An HH:MM:SS timestamp from the server in UTC timezone.</description>
+        </parameter>
+        <parameter name="doubles" type="string">
+            <description>Singles or doubles. Singles=1, Doubles=2.</description>
+        </parameter>
+        <parameter name="nb_set" type="string">
+            <description>Number of sets for the match.</description>
+        </parameter>
+        <parameter name="serve_first" type="string">
+            <description>Team who served first. 1=Team1, 2=Team2, !=not defined.</description>
+        </parameter>
+        <parameter name="on_court" type="string">
+            <description>Time the players arrived on court.</description>
+        </parameter>
+        <parameter name="num_court" type="string">
+            <description>Which court the match is on.</description>
+        </parameter>
+        <parameter name="type_tie_break" type="string">
+            <description>Tiebreak in final set = 0, no tiebreak in final set = 1.</description>
+        </parameter>
+        <parameter name="scoring_type" type="string">
+            <description>1=Standard, 2=Standard with no advantage, 5=Match tiebreak instead of final set, 9=Modern set.</description>
+        </parameter>
+        <parameter name="toss_chooser" type="string">
+            <description>Toss winner choice. 1=Serve, 2=Ends, !=gave choice to opponent.</description>
+        </parameter>
+        <parameter name="tossChoice" type="string"/>
+        <parameter name="tossWinner" type="string"/>
+        <parameter name="firstToServe" type="string"/>
+        <parameter name="match_state" type="MatchState">
+            <description>The state of the match.</description>
+        </parameter>
+        <parameter name="finished" type="FinishedStatus">
+            <description>Current state. Match not finished = 0, match finished &gt; 0.</description>
+        </parameter>
+        <parameter name="surname1" type="string">
+            <description>Display name, usually in the format A.SURNAME.</description>
+        </parameter>
+        <parameter name="surname2" type="string"/>
+        <parameter name="surname1a" type="string"/>
+        <parameter name="surname2a" type="string"/>
+        <parameter name="number1" type="string">
+            <description>Player ID.</description>
+        </parameter>
+        <parameter name="number2" type="string">
+            <description>Player ID.</description>
+        </parameter>
+        <parameter name="number1a" type="string">
+            <description>Player ID for the second player on team 1 in doubles.</description>
+        </parameter>
+        <parameter name="number2a" type="string">
+            <description>Player ID for the second player on team 2 in doubles.</description>
+        </parameter>
+        <parameter name="country1" type="string">
+            <description>Three character Olympic country code.</description>
+        </parameter>
+        <parameter name="country2" type="string"/>
+        <parameter name="country1a" type="string"/>
+        <parameter name="country2a" type="string"/>
+        <parameter name="umpire" type="string">
+            <description>Umpire name in A.SURNAME format.</description>
+        </parameter>
+        <parameter name="umpire_code" type="string">
+            <description>First 4 characters of surname plus first 2 characters of first name.</description>
+        </parameter>
+        <parameter name="umpire_country" type="string">
+            <description>Three character Olympic country code.</description>
+        </parameter>
+        <parameter name="undo" type="string">
+            <description>0 or 1. If 1, previous packet has been undone.</description>
+        </parameter>
+        <parameter name="lastStrokeId" type="string"/>
+        <parameter name="server" type="string"/>
+        <parameter name="strokeIndex" type="string"/>
+        <parameter name="strokeType" type="StrokeType"/>
+        <parameter name="strokeId" type="string"/>
+        <parameter name="utcTime" type="string"/>
+        <parameter name="currentSet" type="string"/>
+        <parameter name="currentGame" type="string"/>
+        <parameter name="player1" type="string"/>
+        <parameter name="player2" type="string"/>
+        <parameter name="player1SetsWon" type="string"/>
+        <parameter name="player2SetsWon" type="string"/>
+        <parameter name="player1GamesWon" type="string"/>
+        <parameter name="player2GamesWon" type="string"/>
+        <parameter name="player1PointsWon" type="string"/>
+        <parameter name="player2PointsWon" type="string"/>
+        <parameter name="player1SetScores" type="string"/>
+        <parameter name="player2SetScores" type="string"/>
+        <parameter name="team1PointsAfter" type="string"/>
+        <parameter name="team2PointsAfter" type="string"/>
+        <parameter name="wonBy" type="string"/>
+        <parameter name="matchTime" type="string"/>
+        <parameter name="isLive" type="string"/>
+        <parameter name="eventTypeStatus" type="EventTypeStatus"/>
+        <parameter name="startDate" type="dateTime"/>
+    </dataType>
+
+    <exceptionType name="APINGException" prefix="SCORES">
+        <description>This exception is thrown when an operation fails.</description>
+        <parameter name="errorCode" type="APINGExceptionErrorCode">
+            <description>The API NG error code.</description>
+        </parameter>
+        <parameter name="errorDetails" type="string">
+            <description>The stack trace of the error.</description>
+        </parameter>
+        <parameter name="requestUUID" type="string"/>
+    </exceptionType>
+
+    <simpleType name="ResponseCode" type="string">
+        <validValues>
+            <value name="OK">
+                <description>Data returned successfully.</description>
+            </value>
+            <value name="NO_NEW_UPDATES">
+                <description>No updates since the passed UpdateSequence.</description>
+            </value>
+            <value name="NO_LIVE_DATA_AVAILABLE">
+                <description>Event scores are no longer available or are not on the schedule.</description>
+            </value>
+            <value name="SERVICE_UNAVAILABLE">
+                <description>Data feed for the event type is currently unavailable.</description>
+            </value>
+            <value name="UNEXPECTED_ERROR">
+                <description>An unexpected error occurred retrieving score data.</description>
+            </value>
+            <value name="LIVE_DATA_TEMPORARILY_UNAVAILABLE">
+                <description>Live data feed for this event or match is temporarily unavailable; data could potentially be stale.</description>
+            </value>
+        </validValues>
+    </simpleType>
+
+    <simpleType name="APINGExceptionErrorCode" type="string">
+        <validValues>
+            <value name="UNEXPECTED_ERROR">
+                <description>The operation failed with an unexpected error.</description>
+            </value>
+            <value name="INVALID_INPUT_DATA">
+                <description>Invalid input data.</description>
+            </value>
+            <value name="INVALID_SESSION_INFORMATION">
+                <description>The session token passed is invalid or expired.</description>
+            </value>
+            <value name="INVALID_APP_KEY">
+                <description>The application key passed is invalid.</description>
+            </value>
+            <value name="SERVICE_BUSY">
+                <description>The service is currently too busy to service this request.</description>
+            </value>
+            <value name="TIMEOUT_ERROR">
+                <description>Internal call to downstream service timed out.</description>
+            </value>
+            <value name="NO_SESSION">
+                <description>A session token is required for this operation.</description>
+            </value>
+            <value name="NO_APP_KEY">
+                <description>An application key is required for this operation.</description>
+            </value>
+            <value name="TOO_MANY_REQUESTS">
+                <description>Too many requests.</description>
+            </value>
+            <value name="SERVICE_UNAVAILABLE">
+                <description>Service is currently unavailable.</description>
+            </value>
+        </validValues>
+    </simpleType>
+
+    <simpleType name="EventStatus" type="string">
+        <validValues>
+            <value name="PENDING"/>
+            <value name="IN_PROGRESS"/>
+            <value name="FINISHED"/>
+        </validValues>
+    </simpleType>
+
+    <simpleType name="EventTypeStatus" type="string">
+        <validValues>
+            <value name="onCourt"/>
+            <value name="warmUp"/>
+            <value name="inPlay"/>
+            <value name="suspended"/>
+            <value name="finished"/>
+            <value name="toiletBreak"/>
+            <value name="medicalTimeout"/>
+            <value name="challengeInProgress"/>
+            <value name="replayPoint"/>
+            <value name="correctionMode"/>
+        </validValues>
+    </simpleType>
+
+    <simpleType name="MatchState" type="string">
+        <validValues>
+            <value name="C">
+                <description>On court: sent when the umpire is on court, approximately 10-15 minutes before the match starts.</description>
+            </value>
+            <value name="W">
+                <description>Warmup: the players start warming up.</description>
+            </value>
+            <value name="P">
+                <description>In progress: the match is in progress.</description>
+            </value>
+            <value name="S">
+                <description>Suspended: the match has been suspended.</description>
+            </value>
+            <value name="F">
+                <description>Finished: the match is finished.</description>
+            </value>
+            <value name="D">
+                <description>Toilet break.</description>
+            </value>
+            <value name="M">
+                <description>Medical timeout.</description>
+            </value>
+            <value name="R">
+                <description>Challenge in progress, also used when there is Ball Mark Inspection.</description>
+            </value>
+            <value name="L">
+                <description>Replay point.</description>
+            </value>
+            <value name="E">
+                <description>Correction mode: when a point is undone, the match goes into correction mode while the umpire corrects the score.</description>
+            </value>
+        </validValues>
+    </simpleType>
+
+    <simpleType name="FinishedStatus" type="string"/>
+
+    <simpleType name="StrokeType" type="string">
+        <validValues>
+            <value name="time"/>
+            <value name="occ_started"/>
+            <value name="occ_ended"/>
+            <value name="fault"/>
+            <value name="foofault"/>
+            <value name="ace"/>
+            <value name="let"/>
+            <value name="point"/>
+            <value name="pointstart"/>
+            <value name="doublefault"/>
+            <value name="pointpenaltycode"/>
+            <value name="pointpenaltytime"/>
+            <value name="gamepenalty"/>
+            <value name="time_violation_A"/>
+            <value name="time_violation_B"/>
+            <value name="code_violation_A"/>
+            <value name="code_violation_B"/>
+            <value name="toilet_break"/>
+            <value name="medicalTimeout"/>
+            <value name="overrule"/>
+            <value name="challenge"/>
+            <value name="challenge_A_won"/>
+            <value name="challenge_A_lost"/>
+            <value name="challenge_B_won"/>
+            <value name="challenge_B_lost"/>
+            <value name="ball_mark_inspection"/>
+            <value name="default_A"/>
+            <value name="default_B"/>
+            <value name="retire_A"/>
+            <value name="retire_B"/>
+            <value name="walkover_A"/>
+            <value name="walkover_B"/>
+            <value name="swop_server"/>
+            <value name="swop_receiver"/>
+            <value name="suspended_rain"/>
+            <value name="suspended_darkness"/>
+            <value name="suspended_pause"/>
+            <value name="suspended_heat"/>
+            <value name="suspended_other"/>
+            <value name="unsuspended"/>
+            <value name="ten_min_heatbreak_started"/>
+            <value name="ten_min_heatbreak_ended"/>
+            <value name="ten_min_heatbreak_declined"/>
+            <value name="re_warmup"/>
+            <value name="play_restarted"/>
+            <value name="Suspended"/>
+            <value name="unknown"/>
+        </validValues>
+    </simpleType>
+
+    <simpleType name="UpdateSequence" type="long"/>
+    <simpleType name="EventId" type="string"/>
+    <simpleType name="EventTypeId" type="string"/>
+    <simpleType name="EventTime" type="string"/>
+    <simpleType name="UpdateType" type="string"/>
+    <simpleType name="LastUpdated" type="dateTime"/>
+    <simpleType name="MeetingId" type="string"/>
+    <simpleType name="RaceId" type="string"/>
+    <simpleType name="RaceStatus" type="string"/>
+</interface>

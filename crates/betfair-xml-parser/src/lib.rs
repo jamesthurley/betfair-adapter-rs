@@ -36,6 +36,14 @@ pub struct Interface {
     pub date: String,
     /// The namespace of the interface
     pub namespace: String,
+    /// Transport used by the interface. Missing values default to REST in typegen.
+    pub transport: Option<String>,
+    /// Endpoint path used by non-REST transports.
+    #[serde(rename = "endpointPath")]
+    pub endpoint_path: Option<String>,
+    /// Method prefix used by JSON-RPC transports.
+    #[serde(rename = "methodPrefix")]
+    pub method_prefix: Option<String>,
     /// Vector of possible values enclosed within the interface
     #[serde(rename = "$value")]
     pub items: Vec<InterfaceItems>,
@@ -249,6 +257,9 @@ mod tests {
         assert_eq!(interface.version, "1.0.0");
         assert_eq!(interface.date, "now()");
         assert_eq!(interface.namespace, "com.betfair.heartbeat.api");
+        assert_eq!(interface.transport, None);
+        assert_eq!(interface.endpoint_path, None);
+        assert_eq!(interface.method_prefix, None);
         assert_eq!(interface.items.len(), 5);
         assert!(matches!(interface.items[0], InterfaceItems::Description(_)));
         assert!(matches!(interface.items[1], InterfaceItems::Operation(_)));

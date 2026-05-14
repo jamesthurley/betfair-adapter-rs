@@ -20,7 +20,7 @@ impl BetfairTypeGenerator {
         strategy: &T,
         settings: &E,
     ) -> GeneratedOutput {
-        const SERVICES: [(&str, &str); 3] = [
+        const SERVICES: [(&str, &str); 4] = [
             (
                 "account_aping",
                 include_str!("../../assets/AccountAPING.xml"),
@@ -30,6 +30,10 @@ impl BetfairTypeGenerator {
                 include_str!("../../assets/HeartbeatAPING.xml"),
             ),
             ("sports_aping", include_str!("../../assets/SportsAPING.xml")),
+            (
+                "scores_aping",
+                include_str!("../../assets/ScoresTennisAPING.xml"),
+            ),
         ];
 
         fn parse_aping(
@@ -58,6 +62,9 @@ impl BetfairTypeGenerator {
         }
         if settings.sports_aping() {
             parse_aping(strategy, &mut output, 2);
+        }
+        if settings.scores_aping() {
+            parse_aping(strategy, &mut output, 3);
         }
 
         output

@@ -3,17 +3,27 @@ use quote::quote;
 
 use super::GenV1GeneratorStrategy;
 use super::injector::CodeInjector;
+use crate::aping_ast::ApiTransport;
 use crate::aping_ast::rpc_calls::RpcCall;
 use crate::aping_ast::types::Name;
 use crate::gen_v1::documentation::CommentParse as _;
 
 impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
+    #[cfg(test)]
     pub(crate) fn generate_rpc_call(&self, data_type: &RpcCall) -> TokenStream {
+        self.generate_rpc_call_with_transport(data_type, &ApiTransport::Rest)
+    }
+
+    pub(crate) fn generate_rpc_call_with_transport(
+        &self,
+        data_type: &RpcCall,
+        transport: &ApiTransport,
+    ) -> TokenStream {
         let description = data_type.description.as_slice().object_comment();
         let module_name = data_type.name.ident_snake();
         let return_type = self.return_type(data_type);
         let parameter = self.parameter(data_type);
-        let call_traits = self.generate_call_traits(data_type);
+        let call_traits = self.generate_call_traits(data_type, transport);
         quote! {
             #description
             pub mod #module_name {
@@ -26,9 +36,28 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
         }
     }
 
-    fn generate_call_traits(&self, data_type: &RpcCall) -> TokenStream {
+    fn generate_call_traits(&self, data_type: &RpcCall, transport: &ApiTransport) -> TokenStream {
         let description = data_type.description.as_slice().object_comment();
-        let name = format!("{}/", data_type.name.0.as_str());
+        let method = match transport {
+            ApiTransport::Rest => format!("{}/", data_type.name.0.as_str()),
+            ApiTransport::JsonRpc { method_prefix, .. } => {
+                format!("{method_prefix}{}", data_type.name.0.as_str())
+            }
+        };
+
+        let transport_methods = match transport {
+            ApiTransport::Rest => quote! {},
+            ApiTransport::JsonRpc { endpoint_path, .. } => quote! {
+                fn transport() -> BetfairRpcTransport {
+                    BetfairRpcTransport::JsonRpc
+                }
+
+                fn endpoint_path() -> &'static str {
+                    #endpoint_path
+                }
+            },
+        };
+
         quote! {
             #description
             impl BetfairRpcRequest for Parameters {
@@ -36,8 +65,10 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
                 type Error = Exception;
 
                 fn method() -> &'static str {
-                    #name
+                    #method
                 }
+
+                #transport_methods
             }
         }
     }
