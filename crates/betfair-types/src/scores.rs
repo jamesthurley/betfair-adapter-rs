@@ -3,11 +3,6 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use serde::de::{
-    DeserializeOwned, Error as _,
-    value::{BorrowedStrDeserializer, MapDeserializer},
-};
-
 use crate::types::scores_aping::{Incident, Score, TennisIncidentValues, TennisScoreValues};
 
 /// The raw dynamic values map returned in Scores API score and incident updates.
@@ -32,11 +27,6 @@ macro_rules! extract_tennis_values {
 
 /// Deserializes a Scores API dynamic values map into a documented values view.
 pub trait ScoresValuesExt {
-    /// Deserialize this dynamic values map into any compatible generated values type.
-    fn deserialize_values<T>(&self) -> serde_json::Result<T>
-    where
-        T: DeserializeOwned;
-
     /// Deserialize this dynamic values map as tennis score values.
     fn tennis_score_values(&self) -> serde_json::Result<TennisScoreValues>;
 
@@ -45,13 +35,6 @@ pub trait ScoresValuesExt {
 }
 
 impl ScoresValuesExt for ScoresValuesMap {
-    fn deserialize_values<T>(&self) -> serde_json::Result<T>
-    where
-        T: DeserializeOwned,
-    {
-        deserialize_values_map(self)
-    }
-
     fn tennis_score_values(&self) -> serde_json::Result<TennisScoreValues> {
         Ok(TennisScoreValues::from_scores_values(self))
     }
@@ -191,19 +174,4 @@ impl Incident {
             .map(TennisIncidentValues::try_from)
             .transpose()
     }
-}
-
-fn deserialize_values_map<T>(values: &ScoresValuesMap) -> serde_json::Result<T>
-where
-    T: DeserializeOwned,
-{
-    let fields = values.iter().map(|(key, value)| {
-        (
-            BorrowedStrDeserializer::<serde::de::value::Error>::new(key.as_str()),
-            BorrowedStrDeserializer::<serde::de::value::Error>::new(value.as_str()),
-        )
-    });
-
-    T::deserialize(MapDeserializer::<_, serde::de::value::Error>::new(fields))
-        .map_err(|err| serde_json::Error::custom(err.to_string()))
 }
