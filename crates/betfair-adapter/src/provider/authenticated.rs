@@ -343,9 +343,14 @@ fn parse_error_value<E>(value: serde_json::Value) -> Result<E, ApiError>
 where
     E: serde::de::DeserializeOwned,
 {
+    // First try the value exactly as supplied. For JSON-RPC this is usually
+    // `error.data`, which can already be the generated APING exception shape.
     match serde_json::from_value::<E>(value.clone()) {
         Ok(error) => Ok(error),
         Err(direct_err) => {
+            // Some Betfair JSON-RPC errors wrap the APING exception one level
+            // down, for example under a service-specific property. If the direct
+            // parse failed, scan immediate object values for the expected error.
             if let serde_json::Value::Object(map) = value {
                 for inner in map.into_values() {
                     if let Ok(error) = serde_json::from_value::<E>(inner) {
@@ -353,6 +358,8 @@ where
                     }
                 }
             }
+            // Preserve the original direct parse error; it points at the shape
+            // the caller expected rather than at a fallback candidate.
             Err(direct_err.into())
         }
     }

@@ -30,10 +30,7 @@ impl BetfairTypeGenerator {
                 include_str!("../../assets/HeartbeatAPING.xml"),
             ),
             ("sports_aping", include_str!("../../assets/SportsAPING.xml")),
-            (
-                "scores_aping",
-                include_str!("../../assets/ScoresTennisAPING.xml"),
-            ),
+            ("scores_aping", include_str!("../../assets/ScoresAPING.xml")),
         ];
 
         fn parse_aping(

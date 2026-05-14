@@ -2,7 +2,7 @@
 <interface name="ScoresAPING" owner="BDP" version="1.0.0" date="now()" namespace="com.betfair.scores.api"
            transport="json-rpc" endpointPath="/exchange/scores/json-rpc/v1" methodPrefix="ScoresAPING/v1.0/"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <description>Scores API Tennis</description>
+    <description>Scores API</description>
 
     <operation name="listAvailableEvents" since="1.0.0">
         <description>Search for events that have live score data available.</description>

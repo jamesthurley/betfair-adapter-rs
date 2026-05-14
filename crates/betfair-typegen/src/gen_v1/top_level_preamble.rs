@@ -19,13 +19,9 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
 
                 fn method() -> &'static str;
 
-                fn transport() -> BetfairRpcTransport {
-                    BetfairRpcTransport::Rest
-                }
+                fn transport() -> BetfairRpcTransport;
 
-                fn endpoint_path() -> &'static str {
-                    ""
-                }
+                fn endpoint_path() -> &'static str;
             }
 
             use std::fmt;

@@ -53,11 +53,14 @@ pub(crate) struct Aping {
 impl From<Interface> for Aping {
     fn from(val: Interface) -> Self {
         let transport = match val.transport.as_deref() {
-            Some("json-rpc" | "jsonRpc" | "json_rpc" | "JSON-RPC") => ApiTransport::JsonRpc {
+            None => ApiTransport::Rest,
+            Some("json-rpc") => ApiTransport::JsonRpc {
                 endpoint_path: val.endpoint_path.unwrap_or_default(),
                 method_prefix: val.method_prefix.unwrap_or_default(),
             },
-            _ => ApiTransport::Rest,
+            Some(transport) => panic!(
+                "unsupported API transport `{transport}`; expected `json-rpc` or no transport"
+            ),
         };
 
         let aping_default = Self {

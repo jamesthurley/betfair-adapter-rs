@@ -45,17 +45,12 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
             }
         };
 
-        let transport_methods = match transport {
-            ApiTransport::Rest => quote! {},
-            ApiTransport::JsonRpc { endpoint_path, .. } => quote! {
-                fn transport() -> BetfairRpcTransport {
-                    BetfairRpcTransport::JsonRpc
-                }
-
-                fn endpoint_path() -> &'static str {
-                    #endpoint_path
-                }
-            },
+        let (transport_variant, endpoint_path) = match transport {
+            ApiTransport::Rest => (quote! { BetfairRpcTransport::Rest }, ""),
+            ApiTransport::JsonRpc { endpoint_path, .. } => (
+                quote! { BetfairRpcTransport::JsonRpc },
+                endpoint_path.as_str(),
+            ),
         };
 
         quote! {
@@ -68,7 +63,13 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
                     #method
                 }
 
-                #transport_methods
+                fn transport() -> BetfairRpcTransport {
+                    #transport_variant
+                }
+
+                fn endpoint_path() -> &'static str {
+                    #endpoint_path
+                }
             }
         }
     }
@@ -256,6 +257,14 @@ mod test {
                     fn method() -> &'static str {
                         "createDeveloperAppKeys/"
                     }
+
+                    fn transport() -> BetfairRpcTransport {
+                        BetfairRpcTransport::Rest
+                    }
+
+                    fn endpoint_path() -> &'static str {
+                        ""
+                    }
                 }
             }
         };
@@ -328,6 +337,14 @@ mod test {
                     type Error = Exception;
                     fn method() -> &'static str {
                         "createDeveloperAppKeys/"
+                    }
+
+                    fn transport() -> BetfairRpcTransport {
+                        BetfairRpcTransport::Rest
+                    }
+
+                    fn endpoint_path() -> &'static str {
+                        ""
                     }
                 }
             }
