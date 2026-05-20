@@ -1,12 +1,13 @@
 //! Helpers for working with Scores API dynamic values.
 
-use std::collections::HashMap;
 use std::sync::Arc;
+
+use indexmap::IndexMap;
 
 use crate::types::scores_aping::{Incident, Score, TennisIncidentValues, TennisScoreValues};
 
 /// The raw dynamic values map returned in Scores API score and incident updates.
-pub type ScoresValuesMap = HashMap<Arc<String>, Arc<String>>;
+pub type ScoresValuesMap = IndexMap<Arc<String>, Arc<String>>;
 
 macro_rules! extract_tennis_values {
     ($values:expr, $type:ident { $($field:ident: $key:literal),+ $(,)? }) => {{
