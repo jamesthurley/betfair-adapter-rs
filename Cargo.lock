@@ -294,6 +294,7 @@ version = "0.7.0"
 dependencies = [
  "betfair-typegen",
  "chrono",
+ "indexmap",
  "json-rpc-types",
  "redact",
  "rstest",
@@ -2894,8 +2895,9 @@ dependencies = [
 
 [[package]]
 name = "vector-map"
-version = "1.0.2"
-source = "git+https://github.com/jamesthurley/vec-map-rs.git?rev=7102bcd#7102bcd14df1e81321411ff310316c9afbaf08c2"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0dfc85d5e0ff077e86e69d0a9342a7ba0de8d22f693e580b36ac950195962018"
 dependencies = [
  "serde",
 ]
