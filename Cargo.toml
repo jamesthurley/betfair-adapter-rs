@@ -96,7 +96,7 @@ trait-variant = "0.1"
 itertools = "0.14"
 log = "0.4"
 backon = "1"
-vector-map = { version = "1.0.2", features = ["serde_impl"], git = "https://github.com/jamesthurley/vec-map-rs.git", rev = "7102bcd" }
+vector-map = { version = "1.1.0", features = ["serde_impl", "expose_pair_of_slices"] }
 indexmap = { version = "2.13.0", features = ["serde"] }
 
 # Async

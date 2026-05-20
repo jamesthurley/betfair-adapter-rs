@@ -70,7 +70,7 @@ impl TypeResolverV1 {
             TypePlural::Map { ref key, ref value } => {
                 let key = transform_to_rust_types(key);
                 let value = transform_to_rust_types(value);
-                let value = format!("std::collections::HashMap<{key}, {value}>");
+                let value = format!("indexmap::IndexMap<{key}, {value}>");
                 syn::parse_str(&value).wrap_err_with(|| format!("Failed to parse type: {value}"))?
             }
         };
