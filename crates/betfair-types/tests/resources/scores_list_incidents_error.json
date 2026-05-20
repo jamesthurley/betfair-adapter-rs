@@ -1,0 +1,12 @@
+[
+  {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "eventId": "356195383",
+        "responseCode": "NO_LIVE_DATA_AVAILABLE"
+      }
+    ],
+    "id": 1
+  }
+]

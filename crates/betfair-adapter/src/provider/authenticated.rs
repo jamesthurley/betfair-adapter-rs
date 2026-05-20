@@ -243,15 +243,15 @@ impl<'a, T> JsonRpcRequest<'a, T> {
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
-enum JsonRpcPayload<T> {
-    Batch(Vec<JsonRpcEnvelope<T>>),
-    Single(JsonRpcEnvelope<T>),
+enum JsonRpcPayload {
+    Batch(Vec<JsonRpcEnvelope>),
+    Single(JsonRpcEnvelope),
 }
 
 #[derive(Debug, Deserialize)]
-struct JsonRpcEnvelope<T> {
-    result: Option<T>,
-    error: Option<JsonRpcError>,
+struct JsonRpcEnvelope {
+    result: Option<serde_json::Value>,
+    error: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Deserialize, serde::Serialize)]
@@ -306,7 +306,7 @@ where
     T: serde::de::DeserializeOwned,
     E: serde::de::DeserializeOwned,
 {
-    let payload = serde_json::from_slice::<JsonRpcPayload<T>>(bytes)?;
+    let payload = serde_json::from_slice::<JsonRpcPayload>(bytes)?;
     let envelope = match payload {
         JsonRpcPayload::Batch(mut batch) => {
             if batch.is_empty() {
@@ -318,7 +318,7 @@ where
     };
 
     if let Some(result) = envelope.result {
-        return Ok(Ok(result));
+        return Ok(Ok(serde_json::from_value(result)?));
     }
 
     if let Some(error) = envelope.error {
@@ -328,15 +328,17 @@ where
     Err(ApiError::EmptyResponse)
 }
 
-fn parse_json_rpc_error<E>(error: JsonRpcError) -> Result<E, ApiError>
+fn parse_json_rpc_error<E>(error: serde_json::Value) -> Result<E, ApiError>
 where
     E: serde::de::DeserializeOwned,
 {
-    if let Some(data) = error.data {
+    if let Ok(json_rpc_error) = serde_json::from_value::<JsonRpcError>(error.clone())
+        && let Some(data) = json_rpc_error.data
+    {
         return parse_error_value(data);
     }
 
-    parse_error_value(serde_json::to_value(error)?)
+    parse_error_value(error)
 }
 
 fn parse_error_value<E>(value: serde_json::Value) -> Result<E, ApiError>
@@ -362,5 +364,63 @@ where
             // the caller expected rather than at a fallback candidate.
             Err(direct_err.into())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_scores_json_rpc_batch_response() {
+        use betfair_types::types::scores_aping::{self, list_incidents};
+
+        let bytes = include_bytes!(
+            "../../../betfair-types/tests/resources/scores_list_incidents_in_progress.json"
+        );
+
+        let result = parse_json_rpc_response::<
+            list_incidents::ReturnType,
+            scores_aping::ApingException,
+        >(bytes)
+        .unwrap()
+        .unwrap();
+
+        assert!(!result.is_empty());
+    }
+
+    #[test]
+    fn parses_scores_non_ok_response_code_as_successful_json_rpc_result() {
+        use betfair_types::types::scores_aping::{self, list_incidents};
+
+        let bytes = include_bytes!(
+            "../../../betfair-types/tests/resources/scores_list_incidents_error.json"
+        );
+
+        let result = parse_json_rpc_response::<
+            list_incidents::ReturnType,
+            scores_aping::ApingException,
+        >(bytes)
+        .unwrap()
+        .unwrap();
+
+        assert_eq!(result.len(), 1);
+        assert!(result[0].incidents.is_empty());
+    }
+
+    #[test]
+    fn result_deserialization_errors_are_not_reported_as_payload_shape_errors() {
+        use betfair_types::types::scores_aping::{self, list_scores};
+
+        let bytes =
+            br#"[{"jsonrpc":"2.0","result":[{"eventId":"356195383","responseCode":"OK"}],"id":1}]"#;
+
+        let err =
+            parse_json_rpc_response::<list_scores::ReturnType, scores_aping::ApingException>(bytes)
+                .unwrap_err();
+        let message = err.to_string();
+
+        assert!(message.contains("missing field"));
+        assert!(!message.contains("JsonRpcPayload"));
     }
 }
