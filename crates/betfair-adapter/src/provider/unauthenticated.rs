@@ -6,6 +6,7 @@ use betfair_types::bot_login::BotLoginResponse;
 use reqwest::{Client, header};
 use tokio::task::JoinHandle;
 use tokio::time::{Instant, interval, sleep};
+use tracing::warn;
 
 use super::BetfairRpcClient;
 use crate::secret::{self, SessionToken};
@@ -133,7 +134,7 @@ impl<T> BetfairRpcClient<T> {
     /// Performs a non-interactive login to obtain a session token and authenticated client.
     #[tracing::instrument(skip(self), err)]
     pub(super) async fn bot_log_in(&self) -> Result<(SessionToken, reqwest::Client), ApiError> {
-        let login_response = self
+        let response = self
             .bot_login_client
             .post(self.bot_login.url().as_str())
             .form(&[
@@ -141,9 +142,18 @@ impl<T> BetfairRpcClient<T> {
                 ("password", self.secret_provider.password.0.expose_secret()),
             ])
             .send()
-            .await?
-            .json::<BotLoginResponse>()
             .await?;
+
+        let status = response.status();
+        let body = response.text().await?;
+
+        let login_response: BotLoginResponse = serde_json::from_str(&body).inspect_err(|_| {
+            warn!(
+                "bot_log_in response failed. Status: {}, body: {}",
+                status, body
+            )
+        })?;
+
         let login_response = login_response.0.map_err(ApiError::BotLoginError)?;
         let session_token = SessionToken(login_response.session_token);
         let authenticated_client =
