@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use backon::{BackoffBuilder, ExponentialBuilder};
-use betfair_types::bot_login::BotLoginResponse;
+use betfair_types::bot_login::{BotLoginResponse, LoginError};
 use reqwest::{Client, header};
 use tokio::task::JoinHandle;
 use tokio::time::{Instant, interval, sleep};
@@ -32,24 +32,7 @@ impl BetfairRpcClient<Unauthenticated> {
         ),
         ApiError,
     > {
-        let mut backoff = ExponentialBuilder::new().build();
-        let mut first_call = true;
-        let (session_token, authenticated_client) = loop {
-            if !first_call {
-                // add exponential recovery
-                let next = backoff.next();
-                let Some(delay) = next else {
-                    return Err(ApiError::EyreError(eyre::eyre!("could not authenticate")));
-                };
-                sleep(delay).await;
-            }
-            first_call = true;
-            let Ok(res) = self.bot_log_in().await else {
-                continue;
-            };
-
-            break res;
-        };
+        let (session_token, authenticated_client) = retry_bot_login(|| self.bot_log_in()).await?;
 
         let state = Authenticated {
             session_token,
@@ -154,6 +137,37 @@ impl<T> BetfairRpcClient<T> {
     // TODO implement interactive login
 }
 
+// Retry once a minute so an almost-expired ban does not add a full ban-length wait.
+const TEMPORARY_BAN_RETRY_DELAY: Duration = Duration::from_secs(60);
+
+async fn retry_bot_login<T, F, Fut>(mut login: F) -> Result<T, ApiError>
+where
+    F: FnMut() -> Fut,
+    Fut: std::future::Future<Output = Result<T, ApiError>>,
+{
+    let mut backoff = ExponentialBuilder::new().build();
+    loop {
+        match login().await {
+            Ok(result) => return Ok(result),
+            Err(error) => {
+                let Some(delay) = backoff.next() else {
+                    return Err(error);
+                };
+                let delay = if matches!(
+                    error,
+                    ApiError::BotLoginError(LoginError::TemporaryBanTooManyRequests)
+                ) {
+                    delay.max(TEMPORARY_BAN_RETRY_DELAY)
+                } else {
+                    delay
+                };
+                tracing::warn!(?delay, %error, "Bot login failed; waiting before retrying");
+                sleep(delay).await;
+            }
+        }
+    }
+}
+
 /// Creates a logged-in HTTP client with the specified application key and session token.
 fn logged_in_client(
     app_key: &ApplicationKey,
@@ -210,4 +224,84 @@ fn login_client(application_key: &ApplicationKey, identity: &Identity) -> Result
         .http2_keep_alive_while_idle(true)
         .build()?;
     Ok(temp_client)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::future::ready;
+
+    #[tokio::test(start_paused = true)]
+    async fn successful_login_does_not_wait_or_retry() {
+        let start = Instant::now();
+        let mut attempts = 0;
+        let result = retry_bot_login(|| {
+            attempts += 1;
+            ready(Ok::<_, ApiError>(42))
+        })
+        .await
+        .unwrap();
+
+        assert_eq!(result, 42);
+        assert_eq!(attempts, 1);
+        assert_eq!(start.elapsed(), Duration::ZERO);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn failed_logins_back_off_and_return_the_last_error() {
+        let start = Instant::now();
+        let mut attempts = Vec::new();
+        let error = retry_bot_login(|| {
+            attempts.push(start.elapsed());
+            ready(Err::<(), _>(ApiError::EyreError(eyre::eyre!(
+                "login failure {}",
+                attempts.len()
+            ))))
+        })
+        .await
+        .unwrap_err();
+
+        assert_eq!(attempts, [0, 1, 3, 7].map(Duration::from_secs));
+        assert_eq!(error.to_string(), "login failure 4");
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn temporary_bans_wait_one_minute_before_each_retry() {
+        let start = Instant::now();
+        let mut attempts = Vec::new();
+        retry_bot_login(|| {
+            attempts.push(start.elapsed());
+            ready(if attempts.len() < 3 {
+                Err(ApiError::BotLoginError(
+                    LoginError::TemporaryBanTooManyRequests,
+                ))
+            } else {
+                Ok(())
+            })
+        })
+        .await
+        .unwrap();
+
+        assert_eq!(attempts, [0, 60, 120].map(Duration::from_secs));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn repeated_temporary_bans_exhaust_retries_and_preserve_the_error() {
+        let start = Instant::now();
+        let mut attempts = Vec::new();
+        let error = retry_bot_login(|| {
+            attempts.push(start.elapsed());
+            ready(Err::<(), _>(ApiError::BotLoginError(
+                LoginError::TemporaryBanTooManyRequests,
+            )))
+        })
+        .await
+        .unwrap_err();
+
+        assert_eq!(attempts, [0, 60, 120, 180].map(Duration::from_secs));
+        assert!(matches!(
+            error,
+            ApiError::BotLoginError(LoginError::TemporaryBanTooManyRequests)
+        ));
+    }
 }

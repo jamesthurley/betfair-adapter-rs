@@ -28,7 +28,7 @@ url.workspace = true
 [dev-dependencies]
 tracing-subscriber.workspace = true
 rstest.workspace = true
-tokio.workspace = true
+tokio = { workspace = true, features = ["test-util"] }
 test-log.workspace = true
 wiremock.workspace = true
 pretty_assertions.workspace = true
