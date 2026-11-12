@@ -1,0 +1,30 @@
+[
+  {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "eventId": "35593065",
+        "eventTypeId": "2",
+        "updateContext": {
+          "eventTime": "",
+          "lastUpdated": "2026-05-13T11:39:25.000Z",
+          "updateSequence": 0,
+          "updateType": "score"
+        },
+        "values": {
+          "player1": "98359744",
+          "player2": "17170996",
+          "eventTypeStatus": "pending",
+          "player1.1": "11260413",
+          "startDate": "2026-05-13T11:30:00.000Z",
+          "player1.2": "12535088",
+          "player2.1": "10827717",
+          "player2.2": "25215658"
+        },
+        "eventStatus": "PENDING",
+        "responseCode": "OK"
+      }
+    ],
+    "id": 1
+  }
+]

@@ -7,18 +7,28 @@ use super::injector::CodeInjector;
 impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
     pub(crate) fn generate_transport_layer(&self) -> TokenStream {
         quote! {
+            #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+            pub enum BetfairRpcTransport {
+                Rest,
+                JsonRpc,
+            }
+
             pub trait BetfairRpcRequest {
                 type Res;
                 type Error;
 
                 fn method() -> &'static str;
+
+                fn transport() -> BetfairRpcTransport;
+
+                fn endpoint_path() -> &'static str;
             }
 
             use std::fmt;
 
             use serde::de::{self, Visitor};
             use serde::{Deserialize, Deserializer};
-            use std::collections::HashMap;
+            use indexmap::IndexMap;
             use std::hash::Hash;
             use crate::numeric::{F64Ord};
 
@@ -128,19 +138,19 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
                 }
             }
 
-            /// For fields of type `Option<HashMap<K, V>>`
+            /// For fields of type `Option<IndexMap<K, V>>`
             ///
             /// If any of the map values are null, they are ignored and not added
-            /// to the resulting HashMap.
+            /// to the resulting IndexMap.
             pub fn deserialize_map_skip_null<'de, D, K, V>(
                 deserializer: D,
-            ) -> Result<Option<HashMap<K, V>>, D::Error>
+            ) -> Result<Option<IndexMap<K, V>>, D::Error>
             where
                 D: Deserializer<'de>,
                 K: Deserialize<'de> + Eq + Hash,
                 V: Deserialize<'de>,
             {
-                let opt_map: Option<HashMap<K, Option<V>>> = Option::deserialize(deserializer)?;
+                let opt_map: Option<IndexMap<K, Option<V>>> = Option::deserialize(deserializer)?;
                 Ok(opt_map.map(|map| {
                     map.into_iter()
                         .filter_map(|(k, v)| v.map(|vv| (k, vv))) // drop entries where value == null
@@ -148,13 +158,13 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
                 }))
             }
 
-            /// For fields of type `HashMap<K, V>`
+            /// For fields of type `IndexMap<K, V>`
             ///
             /// Behaves the same as [`deserialize_map_skip_null`] except
-            /// that if the overall value is null then an empty HashMap is returned.
+            /// that if the overall value is null then an empty IndexMap is returned.
             pub fn deserialize_map_skip_null_default_empty<'de, D, K, V>(
                 deserializer: D,
-            ) -> Result<HashMap<K, V>, D::Error>
+            ) -> Result<IndexMap<K, V>, D::Error>
             where
                 D: Deserializer<'de>,
                 K: Deserialize<'de> + Eq + Hash,

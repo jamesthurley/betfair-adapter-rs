@@ -3,17 +3,27 @@ use quote::quote;
 
 use super::GenV1GeneratorStrategy;
 use super::injector::CodeInjector;
+use crate::aping_ast::ApiTransport;
 use crate::aping_ast::rpc_calls::RpcCall;
 use crate::aping_ast::types::Name;
 use crate::gen_v1::documentation::CommentParse as _;
 
 impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
+    #[cfg(test)]
     pub(crate) fn generate_rpc_call(&self, data_type: &RpcCall) -> TokenStream {
+        self.generate_rpc_call_with_transport(data_type, &ApiTransport::Rest)
+    }
+
+    pub(crate) fn generate_rpc_call_with_transport(
+        &self,
+        data_type: &RpcCall,
+        transport: &ApiTransport,
+    ) -> TokenStream {
         let description = data_type.description.as_slice().object_comment();
         let module_name = data_type.name.ident_snake();
         let return_type = self.return_type(data_type);
         let parameter = self.parameter(data_type);
-        let call_traits = self.generate_call_traits(data_type);
+        let call_traits = self.generate_call_traits(data_type, transport);
         quote! {
             #description
             pub mod #module_name {
@@ -26,9 +36,23 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
         }
     }
 
-    fn generate_call_traits(&self, data_type: &RpcCall) -> TokenStream {
+    fn generate_call_traits(&self, data_type: &RpcCall, transport: &ApiTransport) -> TokenStream {
         let description = data_type.description.as_slice().object_comment();
-        let name = format!("{}/", data_type.name.0.as_str());
+        let method = match transport {
+            ApiTransport::Rest => format!("{}/", data_type.name.0.as_str()),
+            ApiTransport::JsonRpc { method_prefix, .. } => {
+                format!("{method_prefix}{}", data_type.name.0.as_str())
+            }
+        };
+
+        let (transport_variant, endpoint_path) = match transport {
+            ApiTransport::Rest => (quote! { BetfairRpcTransport::Rest }, ""),
+            ApiTransport::JsonRpc { endpoint_path, .. } => (
+                quote! { BetfairRpcTransport::JsonRpc },
+                endpoint_path.as_str(),
+            ),
+        };
+
         quote! {
             #description
             impl BetfairRpcRequest for Parameters {
@@ -36,7 +60,15 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
                 type Error = Exception;
 
                 fn method() -> &'static str {
-                    #name
+                    #method
+                }
+
+                fn transport() -> BetfairRpcTransport {
+                    #transport_variant
+                }
+
+                fn endpoint_path() -> &'static str {
+                    #endpoint_path
                 }
             }
         }
@@ -116,7 +148,7 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
                             }
                         } else {
                             quote! {
-                                #[serde(skip_serializing_if = "Option::is_none")]
+                                #[serde(default, skip_serializing_if = "Option::is_none")]
                                 #[builder(default, setter(strip_option))]
                                 #[serde(rename = #original_name)]
                                 #struct_parameter_derives
@@ -225,6 +257,14 @@ mod test {
                     fn method() -> &'static str {
                         "createDeveloperAppKeys/"
                     }
+
+                    fn transport() -> BetfairRpcTransport {
+                        BetfairRpcTransport::Rest
+                    }
+
+                    fn endpoint_path() -> &'static str {
+                        ""
+                    }
                 }
             }
         };
@@ -285,7 +325,7 @@ mod test {
                 #[serde(rename_all = "camelCase")]
                 pub struct Parameters {
                     #[doc = "A Display name for the application."]
-                    #[serde (skip_serializing_if = "Option::is_none")]
+                    #[serde (default, skip_serializing_if = "Option::is_none")]
                     #[builder (default , setter (strip_option))]
                     #[serde (rename = "appName")]
                     pub app_name: Option<std::sync::Arc<String> >,
@@ -297,6 +337,14 @@ mod test {
                     type Error = Exception;
                     fn method() -> &'static str {
                         "createDeveloperAppKeys/"
+                    }
+
+                    fn transport() -> BetfairRpcTransport {
+                        BetfairRpcTransport::Rest
+                    }
+
+                    fn endpoint_path() -> &'static str {
+                        ""
                     }
                 }
             }

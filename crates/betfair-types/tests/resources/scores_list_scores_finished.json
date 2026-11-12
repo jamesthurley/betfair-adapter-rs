@@ -1,0 +1,35 @@
+[
+  {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "eventId": "35603047",
+        "eventTypeId": "2",
+        "updateContext": {
+          "eventTime": "17:19:06",
+          "lastUpdated": "2026-05-13T17:19:06.000Z",
+          "updateSequence": 658,
+          "updateType": "score"
+        },
+        "values": {
+          "player2PointsWon": "0",
+          "player1": "8575039",
+          "player2": "8226987",
+          "bestOfSets": "3",
+          "player1SetScores": "4,6,6",
+          "player2GamesWon": "0",
+          "player1GamesWon": "0",
+          "player1SetsWon": "1",
+          "player2SetsWon": "2",
+          "player2SetScores": "6,4,7",
+          "player1PointsWon": "0",
+          "eventTypeStatus": "finished",
+          "startDate": "2026-05-13T13:50:00.000Z"
+        },
+        "eventStatus": "FINISHED",
+        "responseCode": "OK"
+      }
+    ],
+    "id": 1
+  }
+]

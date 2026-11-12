@@ -7,6 +7,7 @@ pub mod customer_strategy_ref;
 pub mod handicap;
 pub mod numeric;
 pub mod price;
+pub mod scores;
 pub mod size;
 
 #[cfg(test)]
@@ -39,6 +40,20 @@ impl types::sports_aping::MarketId {
 
 impl types::sports_aping::BetId {
     /// construct a new bet id
+    pub fn new(id: impl Into<String>) -> Self {
+        Self(std::sync::Arc::new(id.into()))
+    }
+}
+
+impl types::scores_aping::EventId {
+    /// Construct a new scores event id
+    pub fn new(id: impl Into<String>) -> Self {
+        Self(std::sync::Arc::new(id.into()))
+    }
+}
+
+impl types::scores_aping::EventTypeId {
+    /// Construct a new scores event type id
     pub fn new(id: impl Into<String>) -> Self {
         Self(std::sync::Arc::new(id.into()))
     }

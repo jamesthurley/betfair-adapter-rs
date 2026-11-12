@@ -34,17 +34,17 @@ pub enum StatusMessage {
 #[serde(rename_all = "camelCase")]
 pub struct StatusSuccess {
     /// Client generated unique id to link request with response (like json rpc)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<i32>,
     /// The number of connections available for this account at this moment in time. Present on
     /// responses to Authentication messages only.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub connections_available: Option<i32>,
     /// The connection id
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub connection_id: Option<String>,
     /// Is the connection now closed
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub connection_closed: Option<bool>,
 }
 
@@ -55,18 +55,18 @@ pub struct StatusSuccess {
 #[serde(rename_all = "camelCase")]
 pub struct StatusError {
     /// Client generated unique id to link request with response (like json rpc)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<i32>,
     /// Additional message in case of a failure
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub error_message: Option<String>,
     /// The type of error in case of a failure
     pub error_code: ErrorCode,
     /// The connection id
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub connection_id: Option<String>,
     /// Is the connection now closed
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub connection_closed: Option<bool>,
 }
 

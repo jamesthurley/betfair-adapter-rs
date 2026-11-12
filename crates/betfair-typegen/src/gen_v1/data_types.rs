@@ -169,12 +169,12 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
                 let extra = match resolve_type_result.plural {
                     TypePlural::Singular(ref value) => match value.as_str() {
                         "double" | "float" => quote! {
-                            #[serde(deserialize_with = "super::deserialize_f64_option", default)]
+                            #[serde(deserialize_with = "super::deserialize_f64_option")]
                         },
                         _ => quote! {},
                     },
                     TypePlural::Map { key: _, value: _ } => quote! {
-                        #[serde(deserialize_with = "super::deserialize_map_skip_null", default)]
+                        #[serde(deserialize_with = "super::deserialize_map_skip_null")]
                     },
                     _ => quote! {},
                 };
@@ -182,7 +182,7 @@ impl<T: CodeInjector> GenV1GeneratorStrategy<T> {
                 quote! {
                     #description
                     #struct_parameter_derives
-                    #[serde(skip_serializing_if = "Option::is_none")]
+                    #[serde(default, skip_serializing_if = "Option::is_none")]
                     #[serde(rename = #original_name)]
                     #extra
                     #[builder(default, setter(strip_option))]
@@ -314,7 +314,7 @@ mod test {
             pub struct MarketFilter {
                 #[doc = "Restrict markets by any text associated with the market such as the Name, Event, Competition, etc. You can include a wildcard (*) character as long as it is not the first character."]
                 #[doc = "Comment 2."]
-                #[serde(skip_serializing_if="Option::is_none")]
+                #[serde(default, skip_serializing_if="Option::is_none")]
                 #[serde (rename = "textQuery")]
                 #[builder(default, setter(strip_option))]
                 pub text_query: Option<std::sync::Arc<String> >,

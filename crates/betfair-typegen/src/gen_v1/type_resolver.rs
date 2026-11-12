@@ -40,7 +40,7 @@ impl TypeResolverV1 {
             match input {
                 "string" => "std::sync::Arc<String>".to_owned(),
                 "int" | "i32" => "i32".to_owned(),
-                "i64" => "i64".to_owned(),
+                "long" | "i64" => "i64".to_owned(),
                 "double" | "float" => "crate::numeric::F64Ord".to_owned(),
                 "dateTime" => "DateTime<Utc>".to_owned(),
                 "boolean" | "bool" => "bool".to_owned(),
@@ -70,7 +70,7 @@ impl TypeResolverV1 {
             TypePlural::Map { ref key, ref value } => {
                 let key = transform_to_rust_types(key);
                 let value = transform_to_rust_types(value);
-                let value = format!("std::collections::HashMap<{key}, {value}>");
+                let value = format!("indexmap::IndexMap<{key}, {value}>");
                 syn::parse_str(&value).wrap_err_with(|| format!("Failed to parse type: {value}"))?
             }
         };

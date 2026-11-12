@@ -1,7 +1,5 @@
 //! Market book cache
 
-use std::collections::HashMap;
-
 use betfair_adapter::betfair_types::numeric::F64Ord;
 use betfair_adapter::betfair_types::size::Size;
 use betfair_adapter::betfair_types::types::sports_aping::{MarketId, SelectionId};
@@ -9,18 +7,19 @@ use betfair_stream_types::response::market_change_message::{
     MarketChange, MarketDefinition, RunnerChange, RunnerDefinition, StreamMarketDefinitionStatus,
 };
 use chrono::{DateTime, Utc};
+use vector_map::VecMap;
 
 use super::runner_book_cache::RunnerBookCache;
 
 /// A cache for market book data, including market and runner information.
-#[derive(Debug, PartialEq, Eq, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, PartialEq, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MarketBookCache {
     market_id: MarketId,
     publish_time: DateTime<Utc>,
     active: bool,
     total_matched: Size,
     market_definition: Option<Box<MarketDefinition>>,
-    runners: HashMap<(SelectionId, Option<F64Ord>), RunnerBookCache>,
+    runners: VecMap<(SelectionId, Option<F64Ord>), RunnerBookCache>,
 }
 
 /// Represents the market book cache.
@@ -34,7 +33,7 @@ impl MarketBookCache {
             publish_time,
             market_definition: None,
             total_matched: Size::zero(),
-            runners: HashMap::new(),
+            runners: VecMap::new(),
         }
     }
 
@@ -82,7 +81,7 @@ impl MarketBookCache {
                     runner.set_last_price_traded(ltp);
                 }
                 if let Some(tv) = runner_change.total_value {
-                    runner.set_total_matched(tv);
+                    runner.set_total_matched(tv, publish_time);
                 }
                 if let Some(spn) = runner_change.starting_price_near {
                     runner.set_starting_price_near(spn);
@@ -182,7 +181,7 @@ impl MarketBookCache {
 
     /// Returns a reference to the runners in the market.
     #[must_use]
-    pub const fn runners(&self) -> &HashMap<(SelectionId, Option<F64Ord>), RunnerBookCache> {
+    pub const fn runners(&self) -> &VecMap<(SelectionId, Option<F64Ord>), RunnerBookCache> {
         &self.runners
     }
 
@@ -203,6 +202,11 @@ impl MarketBookCache {
     #[must_use]
     pub const fn total_matched(&self) -> Size {
         self.total_matched
+    }
+
+    #[must_use]
+    pub const fn active(&self) -> bool {
+        self.active
     }
 }
 

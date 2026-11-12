@@ -6,6 +6,8 @@ pub trait GeneratorSettings {
     fn heartbeat_aping(&self) -> bool;
     /// Whether to generate the types for the `SportsAPING` service
     fn sports_aping(&self) -> bool;
+    /// Whether to generate the types for the `ScoresAPING` service
+    fn scores_aping(&self) -> bool;
     /// Whether to generate the types for the Stream API
     fn stream_api(&self) -> bool;
 }
@@ -20,6 +22,7 @@ pub struct SimpleGeneratorSettings {
     account_aping: bool,
     heartbeat_aping: bool,
     sports_aping: bool,
+    scores_aping: bool,
     stream_api: bool,
 }
 
@@ -30,12 +33,14 @@ impl SimpleGeneratorSettings {
         account_aping: bool,
         heartbeat_aping: bool,
         sports_aping: bool,
+        scores_aping: bool,
         stream_api: bool,
     ) -> Self {
         Self {
             account_aping,
             heartbeat_aping,
             sports_aping,
+            scores_aping,
             stream_api,
         }
     }
@@ -44,13 +49,13 @@ impl SimpleGeneratorSettings {
     /// service enabled.
     #[must_use]
     pub const fn aping_only() -> Self {
-        Self::new(true, true, true, false)
+        Self::new(true, true, true, true, false)
     }
 
     /// Create a new instance of the `SimpleGeneratorSettings` struct with all services enabled.
     #[must_use]
     pub const fn all() -> Self {
-        Self::new(true, true, true, true)
+        Self::new(true, true, true, true, true)
     }
 }
 
@@ -60,6 +65,7 @@ impl Clone for SimpleGeneratorSettings {
             self.account_aping,
             self.heartbeat_aping,
             self.sports_aping,
+            self.scores_aping,
             self.stream_api,
         )
     }
@@ -76,6 +82,10 @@ impl GeneratorSettings for SimpleGeneratorSettings {
 
     fn sports_aping(&self) -> bool {
         self.sports_aping
+    }
+
+    fn scores_aping(&self) -> bool {
+        self.scores_aping
     }
 
     fn stream_api(&self) -> bool {
